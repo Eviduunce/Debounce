@@ -17,6 +17,7 @@ struct SettingsView: View {
     @State private var isListeningForKey = false
     @State private var newKeyThreshold: UInt64 = 100
     @State private var eventMonitor: Any?
+    @State private var settingsSaved = false
 
     var body: some View {
         TabView {
@@ -97,10 +98,28 @@ struct SettingsView: View {
 
             Section {
                 HStack {
-                    Button("Save Settings") {
+                    Button(action: {
                         onSave()
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            settingsSaved = true
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                settingsSaved = false
+                            }
+                        }
+                    }) {
+                        HStack(spacing: 6) {
+                            if settingsSaved {
+                                Image(systemName: "checkmark.circle")
+                                    .transition(.scale.combined(with: .opacity))
+                            }
+                            Text(settingsSaved ? "Saved!" : "Save Settings")
+                        }
+                        .frame(minWidth: 100)
                     }
                     .buttonStyle(.borderedProminent)
+                    .tint(settingsSaved ? .green : .accentColor)
 
                     Spacer()
 
@@ -288,6 +307,18 @@ struct SettingsView: View {
 
     // MARK: - Statistics Tab
 
+    private var sortedStatistics: [(key: CGKeyCode, value: (presses: Int, chatters: Int))] {
+        // Sort statistics: Most blocked keys appear at the top
+        // Primary sort: by blocked count (descending)
+        // Secondary sort: by key code (ascending) for ties
+        return blocker.statistics.sorted { first, second in
+            if first.value.chatters != second.value.chatters {
+                return first.value.chatters > second.value.chatters
+            }
+            return first.key < second.key
+        }
+    }
+
     private var statisticsTab: some View {
         VStack(spacing: 0) {
             HStack {
@@ -316,18 +347,8 @@ struct SettingsView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                // Sort statistics: Most blocked keys appear at the top
-                // Primary sort: by blocked count (descending)
-                // Secondary sort: by key code (ascending) for ties
-                let sortedKeys = blocker.statistics.sorted { first, second in
-                    if first.value.chatters != second.value.chatters {
-                        return first.value.chatters > second.value.chatters  // Most blocked first
-                    }
-                    return first.key < second.key  // Alphabetical tie-breaker
-                }
-
                 List {
-                    ForEach(sortedKeys, id: \.key) { keyCode, stats in
+                    ForEach(sortedStatistics, id: \.key) { keyCode, stats in
                         HStack {
                             Text(KeyCodeMapper.keyName(for: keyCode))
                                 .font(.system(.body, design: .monospaced))
