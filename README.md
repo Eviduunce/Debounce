@@ -1,7 +1,7 @@
-# KCB_macOS
+# KCBforMac
 Keyboard Chatter Blocker for macOS
 
-Refer to https://github.com/FreneticLLC/KeyboardChatterBlocker for more info.
+Basically FreneticLLC's Keyboard Chatter Blocker just for macOS. (https://github.com/FreneticLLC/KeyboardChatterBlocker) for more info.
 
 # License
 
