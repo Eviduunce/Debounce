@@ -1,21 +1,12 @@
 # KCBforMac - Keyboard Chatter Blocker for macOS
 
-macOS port of the Windows Keyboard Chatter Blocker application.
+macOS port of FreneticLLC's Windows Keyboard Chatter Blocker application.
 
-Basically FreneticLLC's Keyboard Chatter Blocker just for macOS. See https://github.com/FreneticLLC/KeyboardChatterBlocker for more info.
+See https://github.com/FreneticLLC/KeyboardChatterBlocker for more info.
 
 ## 🚀 Quick Start
 
-### 1. Build & Run from Xcode
-
-```bash
-cd "/Users/timo/App Development/KCBforMac"
-open KCBforMac.xcodeproj
-```
-
-Then press **Cmd+R** to build and run with console output visible.
-
-### 2. Grant Accessibility Permissions
+### 1. Grant Accessibility Permissions
 
 **CRITICAL**: The app MUST have Accessibility permissions to intercept keyboard events.
 
@@ -23,9 +14,6 @@ Then press **Cmd+R** to build and run with console output visible.
 2. Go to **System Settings** → **Privacy & Security** → **Accessibility**
 3. Find **KCBforMac** in the list
 4. Toggle it **ON**
-5. If not in list, click the **+** button and navigate to:
-   `/Users/timo/Library/Developer/Xcode/DerivedData/KCBforMac-*/Build/Products/Debug/KCBforMac.app`
-6. **Important**: If you rebuild the app, you may need to re-grant permissions
 
 ### 3. Enable Chatter Blocking
 
@@ -40,7 +28,8 @@ Then press **Cmd+R** to build and run with console output visible.
 2. Select **"Settings..."**
 3. **Settings Tab**: Adjust global threshold (default: 100ms)
 4. **Keys Tab**: Add per-key thresholds for problematic keys
-5. **Log Tab**: View real-time chatter blocking events
+5. **Statistics Tab**: Shows statistics of all keys, including blocked keystrokes
+6. **Log Tab**: View real-time chatter blocking events
 
 ## 📊 How It Works
 
@@ -68,7 +57,7 @@ Make sure accessibility permissions are granted in System Settings → Privacy &
 
 ## ⚙️ Configuration Tips
 
-### For a chattering 'H' key:
+### Example for a chattering 'H' key:
 
 1. Open Settings → Keys tab
 2. Click "Add Key"
@@ -89,12 +78,9 @@ Make sure accessibility permissions are granted in System Settings → Privacy &
 - **Accessibility permissions**: May need to be re-granted after rebuilding the app
 - **Info.plist warning**: Xcode may show a warning about Info.plist in Copy Bundle Resources (this is harmless)
 
-## 🔧 Development
+## 🔧 Requirements
 
-### Build Requirements
-- macOS 13.0 or later
-- Xcode 15.0 or later
-- App Sandbox **DISABLED** (required for CGEventTap)
+- macOS 14.0 or later
 
 ### Key Files
 - `EventInterceptor.swift` - CGEventTap implementation
@@ -115,5 +101,3 @@ Copyright (c) 2024-2025 Frenetic LLC
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
