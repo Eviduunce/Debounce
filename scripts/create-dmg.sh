@@ -2,6 +2,8 @@
 set -euo pipefail
 
 APP_NAME="Debounce"
+IDENTITY="Developer ID Application: Timo Leisengang (ZH6399Z6NR)"
+NOTARY_PROFILE="debounce"
 DERIVED_DATA="$HOME/Library/Developer/Xcode/DerivedData"
 
 if [ $# -ne 1 ]; then
@@ -14,6 +16,7 @@ VERSION="$1"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 BUILD_DIR="$PROJECT_DIR/build"
+ENTITLEMENTS="$PROJECT_DIR/$APP_NAME/$APP_NAME.entitlements"
 DMG_NAME="$APP_NAME-$VERSION.dmg"
 
 # Find the Release build in DerivedData
@@ -26,6 +29,10 @@ if [ -z "$APP_PATH" ] || [ ! -d "$APP_PATH" ]; then
 fi
 
 echo "Found app: $APP_PATH"
+
+# Sign with Developer ID
+echo "Signing with Developer ID..."
+codesign --force --options runtime --sign "$IDENTITY" --entitlements "$ENTITLEMENTS" "$APP_PATH"
 
 # Create staging directory
 STAGING_DIR=$(mktemp -d)
@@ -49,6 +56,17 @@ hdiutil create \
     -ov \
     -format UDZO \
     "$DMG_PATH"
+
+# Sign the DMG
+echo "Signing DMG..."
+codesign --force --sign "$IDENTITY" "$DMG_PATH"
+
+# Notarize
+echo "Submitting for notarization..."
+xcrun notarytool submit "$DMG_PATH" --keychain-profile "$NOTARY_PROFILE" --wait
+
+echo "Stapling notarization ticket..."
+xcrun stapler staple "$DMG_PATH"
 
 echo ""
 echo "Created: $DMG_PATH"
