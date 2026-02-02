@@ -4,16 +4,21 @@ A macOS menu bar utility that blocks keyboard chatter — the unintended duplica
 
 Inspired by the Windows [Keyboard Chatter Blocker](https://github.com/FreneticLLC/KeyboardChatterBlocker).
 
+## Important: Accessibility Permission
+
+This app requires **Accessibility permissions** to intercept keyboard events system-wide via `CGEventTap`. Without this permission, the app cannot function. macOS will prompt you on first launch, or you can enable it manually:
+
+**System Settings → Privacy & Security → Accessibility → KCBforMac → ON**
+
+If you move the app after granting permissions, macOS may revoke them. Re-enable in System Settings if this happens.
+
 ## Installation
 
 1. Download `KCBforMac.zip` from the [latest release](https://github.com/Eviduunce/KCBforMac/releases/latest)
 2. Unzip and move `KCBforMac.app` to `/Applications`
 3. Launch the app — it runs in the menu bar (no Dock icon)
-4. Grant Accessibility permissions when prompted, or enable manually:
-   **System Settings → Privacy & Security → Accessibility → KCBforMac → ON**
+4. Grant Accessibility permissions when prompted (see above)
 5. Click the keyboard icon in the menu bar and select **Enable**
-
-> **Note:** If you move the app after granting Accessibility permissions, macOS may revoke them. Re-enable in System Settings if this happens.
 
 ## Features
 
