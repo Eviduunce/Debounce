@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UserNotifications
 
 @main
 struct KCBforMacApp: App {
@@ -25,30 +26,60 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let chatterBlocker = ChatterBlocker()
     let configManager = ConfigManager()
     var eventInterceptor: EventInterceptor?
+    private var statisticsSaveTimer: Timer?
+    private var iconFlashTimer: Timer?
+    private var statusMenuItem: NSMenuItem?
+    private var toggleMenuItem: NSMenuItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Hide dock icon (menu bar app only)
         NSApp.setActivationPolicy(.accessory)
 
-        // Load saved settings
+        // Load saved settings and statistics
         configManager.loadSettings(into: chatterBlocker)
+        configManager.loadStatistics(into: chatterBlocker)
 
         // Create menu bar item
         setupMenuBar()
 
-        // Start event interceptor
+        // Set up event interceptor
         eventInterceptor = EventInterceptor(chatterBlocker: chatterBlocker)
+
+        eventInterceptor?.onTapDied = { [weak self] in
+            self?.handleTapDied()
+        }
+
+        chatterBlocker.onChatterBlocked = { [weak self] in
+            self?.flashMenuBarIcon()
+        }
 
         if chatterBlocker.isEnabled {
             startBlocking()
         }
+
+        // Save statistics periodically (every 30 seconds)
+        statisticsSaveTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            self.configManager.saveStatistics(from: self.chatterBlocker)
+        }
+
+        configManager.hasLaunchedBefore = true
     }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        configManager.saveStatistics(from: chatterBlocker)
+        stopBlocking()
+    }
+
+    // MARK: - Menu Bar
 
     func setupMenuBar() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: "KCBforMac")
+            let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .regular)
+            button.image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: "Keyboard Chatter Blocker")?
+                .withSymbolConfiguration(config)
             button.action = #selector(statusBarButtonClicked)
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
@@ -60,20 +91,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func createMenu() {
         let menu = NSMenu()
 
-        // Status
-        let statusMenuItem = NSMenuItem(title: chatterBlocker.isEnabled ? "✓ Enabled" : "✗ Disabled", action: nil, keyEquivalent: "")
-        statusMenuItem.isEnabled = false
-        menu.addItem(statusMenuItem)
+        // Status with colored text
+        let item = NSMenuItem()
+        item.isEnabled = false
+        statusMenuItem = item
+        menu.addItem(item)
 
         menu.addItem(NSMenuItem.separator())
 
         // Toggle Enable/Disable
-        let toggleItem = NSMenuItem(
-            title: chatterBlocker.isEnabled ? "Disable" : "Enable",
-            action: #selector(toggleBlocking),
-            keyEquivalent: "e"
-        )
-        menu.addItem(toggleItem)
+        let toggle = NSMenuItem(title: "", action: #selector(toggleBlocking), keyEquivalent: "e")
+        toggleMenuItem = toggle
+        menu.addItem(toggle)
 
         menu.addItem(NSMenuItem.separator())
 
@@ -88,17 +117,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Quit
         menu.addItem(NSMenuItem(
-            title: "Quit KCBforMac",
+            title: "Quit Keyboard Chatter Blocker",
             action: #selector(quitApp),
             keyEquivalent: "q"
         ))
 
-        statusItem?.menu = menu
+        self.statusItem?.menu = menu
+        updateMenu()
+    }
+
+    func updateMenu() {
+        let isEnabled = chatterBlocker.isEnabled
+        let statusTitle = isEnabled ? "Enabled" : "Disabled"
+        let statusColor: NSColor = isEnabled ? .systemGreen : .secondaryLabelColor
+        statusMenuItem?.attributedTitle = NSAttributedString(string: statusTitle, attributes: [
+            .foregroundColor: statusColor,
+            .font: NSFont.menuFont(ofSize: 0)
+        ])
+        toggleMenuItem?.title = isEnabled ? "Disable" : "Enable"
     }
 
     @objc func statusBarButtonClicked() {
-        // Recreate menu each time to update status
-        createMenu()
+        updateMenu()
     }
 
     @objc func toggleBlocking() {
@@ -112,7 +152,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         configManager.saveSettings(from: chatterBlocker)
         updateMenuBarIcon()
-        createMenu()
+        updateMenu()
     }
 
     @objc func openSettings() {
@@ -120,11 +160,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let settingsView = SettingsView(
                 blocker: chatterBlocker,
                 configManager: configManager,
-                onSave: { [weak self] in
-                    guard let self else { return }
-                    self.configManager.saveSettings(from: self.chatterBlocker)
-                    self.updateMenuBarIcon()
-                },
                 onToggleBlocking: { [weak self] enabled in
                     guard let self else { return }
                     if enabled {
@@ -134,13 +169,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     }
                     self.configManager.saveSettings(from: self.chatterBlocker)
                     self.updateMenuBarIcon()
-                    self.createMenu()
+                    self.updateMenu()
                 }
             )
 
             let hostingController = NSHostingController(rootView: settingsView)
             let window = NSWindow(contentViewController: hostingController)
-            window.title = "KCBforMac Settings"
+            window.title = "Keyboard Chatter Blocker — Settings"
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
             window.setContentSize(NSSize(width: 600, height: 500))
             window.center()
@@ -153,13 +188,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func quitApp() {
+        configManager.saveStatistics(from: chatterBlocker)
         stopBlocking()
         NSApp.terminate(nil)
     }
 
     func startBlocking() {
         if eventInterceptor?.start() == false {
-            // Failed to start, likely no permissions
             chatterBlocker.isEnabled = false
             updateMenuBarIcon()
         }
@@ -170,14 +205,61 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         chatterBlocker.resetTimingData()
     }
 
+    // MARK: - Menu Bar Icon
+
     func updateMenuBarIcon() {
-        if let button = statusItem?.button {
-            // Change icon based on state
-            if chatterBlocker.isEnabled {
-                button.image = NSImage(systemSymbolName: "keyboard.fill", accessibilityDescription: "KCBforMac Enabled")
-            } else {
-                button.image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: "KCBforMac Disabled")
-            }
+        guard let button = statusItem?.button else { return }
+        let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .regular)
+        if chatterBlocker.isEnabled {
+            button.image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: "Keyboard Chatter Blocker — Enabled")?
+                .withSymbolConfiguration(config)
+        } else {
+            button.image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: "Keyboard Chatter Blocker — Disabled")?
+                .withSymbolConfiguration(config)
+            button.appearsDisabled = true
+        }
+        if chatterBlocker.isEnabled {
+            button.appearsDisabled = false
         }
     }
+
+    private func flashMenuBarIcon() {
+        guard let button = statusItem?.button else { return }
+
+        // Debounce rapid flashes
+        iconFlashTimer?.invalidate()
+
+        let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .regular)
+        button.image = NSImage(systemSymbolName: "keyboard.badge.ellipsis", accessibilityDescription: "Chatter blocked")?
+            .withSymbolConfiguration(config)
+
+        iconFlashTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { [weak self] _ in
+            self?.updateMenuBarIcon()
+        }
+    }
+
+    // MARK: - Event Tap Death
+
+    private func handleTapDied() {
+        chatterBlocker.isEnabled = false
+        updateMenuBarIcon()
+        updateMenu()
+
+        // Update the icon to indicate error
+        if let button = statusItem?.button {
+            let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .regular)
+            button.image = NSImage(systemSymbolName: "keyboard.badge.exclamationmark", accessibilityDescription: "Keyboard Chatter Blocker — Error")?
+                .withSymbolConfiguration(config)
+        }
+
+        // Show notification
+        let content = UNMutableNotificationContent()
+        content.title = "Chatter blocking stopped"
+        content.body = "The keyboard event monitor was terminated. Re-enable from the menu bar."
+        content.sound = .default
+
+        let request = UNNotificationRequest(identifier: "tapDied", content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request)
+    }
+
 }

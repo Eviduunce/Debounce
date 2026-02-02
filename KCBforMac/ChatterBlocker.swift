@@ -30,6 +30,9 @@ class ChatterBlocker: ObservableObject {
     @Published var measureFromRelease: Bool = false // if true, measure from last release instead of last press
     private let maxLogEntries = 100
 
+    // MARK: - Callbacks
+    var onChatterBlocked: (() -> Void)?
+
     // MARK: - Timing
     private func getCurrentTime() -> UInt64 {
         // Convert system uptime to milliseconds
@@ -101,6 +104,11 @@ class ChatterBlocker: ObservableObject {
         // Log the chatter event
         logChatterEvent(keyCode: keyCode, timeDelta: timeDelta)
 
+        // Notify listener
+        DispatchQueue.main.async {
+            self.onChatterBlocked?()
+        }
+
         return false
     }
 
@@ -142,6 +150,11 @@ class ChatterBlocker: ObservableObject {
     /// Get all configured custom key thresholds
     func getCustomThresholds() -> [CGKeyCode: UInt64] {
         return keyToThreshold
+    }
+
+    /// Remove all custom key thresholds
+    func removeAllThresholds() {
+        keyToThreshold.removeAll()
     }
 
     // MARK: - Statistics & Logging

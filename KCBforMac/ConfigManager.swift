@@ -7,6 +7,7 @@
 
 import Foundation
 import CoreGraphics
+import ServiceManagement
 
 /// Manages persistence of application configuration
 class ConfigManager {
@@ -21,6 +22,8 @@ class ConfigManager {
         static let measureFromRelease = "measureFromRelease"
         static let customThresholds = "customThresholds"
         static let startAtLogin = "startAtLogin"
+        static let statistics = "statistics"
+        static let hasLaunchedBefore = "hasLaunchedBefore"
     }
 
     // MARK: - Save Configuration
@@ -69,13 +72,51 @@ class ConfigManager {
 
     // MARK: - Individual Settings
 
-    /// Get start at login preference
+    // MARK: - Launch at Login
+
     func getStartAtLogin() -> Bool {
-        return defaults.bool(forKey: Keys.startAtLogin)
+        return SMAppService.mainApp.status == .enabled
     }
 
-    /// Set start at login preference
     func setStartAtLogin(_ enabled: Bool) {
-        defaults.set(enabled, forKey: Keys.startAtLogin)
+        do {
+            if enabled {
+                try SMAppService.mainApp.register()
+            } else {
+                try SMAppService.mainApp.unregister()
+            }
+        } catch {
+            // Registration can fail if app is not in /Applications
+        }
+    }
+
+    // MARK: - Statistics Persistence
+
+    func saveStatistics(from blocker: ChatterBlocker) {
+        var dict: [String: [String: Int]] = [:]
+        for (keyCode, stats) in blocker.statistics {
+            dict[String(keyCode)] = ["presses": stats.presses, "chatters": stats.chatters]
+        }
+        defaults.set(dict, forKey: Keys.statistics)
+    }
+
+    func loadStatistics(into blocker: ChatterBlocker) {
+        guard let dict = defaults.dictionary(forKey: Keys.statistics) as? [String: [String: Int]] else { return }
+        var stats: [CGKeyCode: (presses: Int, chatters: Int)] = [:]
+        for (keyString, values) in dict {
+            if let keyCode = CGKeyCode(keyString) {
+                let presses = values["presses"] ?? 0
+                let chatters = values["chatters"] ?? 0
+                stats[keyCode] = (presses: presses, chatters: chatters)
+            }
+        }
+        blocker.statistics = stats
+    }
+
+    // MARK: - First Launch
+
+    var hasLaunchedBefore: Bool {
+        get { defaults.bool(forKey: Keys.hasLaunchedBefore) }
+        set { defaults.set(newValue, forKey: Keys.hasLaunchedBefore) }
     }
 }

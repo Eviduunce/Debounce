@@ -19,6 +19,13 @@ struct ChatterLogView: View {
 
                 Spacer()
 
+                if !blocker.chatterLog.isEmpty {
+                    Button("Copy Log") {
+                        copyLogToClipboard()
+                    }
+                    .buttonStyle(.bordered)
+                }
+
                 Button("Clear") {
                     blocker.clearLog()
                 }
@@ -75,5 +82,14 @@ struct ChatterLogView: View {
 
     private func formatTime(_ date: Date) -> String {
         Self.timeFormatter.string(from: date)
+    }
+
+    private func copyLogToClipboard() {
+        let lines = blocker.chatterLog.map { event in
+            "\(formatTime(event.timestamp))\t\(event.keyName)\t\(event.timeDelta)ms"
+        }
+        let text = "Time\tKey\tDelta\n" + lines.joined(separator: "\n")
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
     }
 }

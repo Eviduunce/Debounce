@@ -14,6 +14,7 @@ class EventInterceptor {
     var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     let chatterBlocker: ChatterBlocker
+    var onTapDied: (() -> Void)?
 
     init(chatterBlocker: ChatterBlocker) {
         self.chatterBlocker = chatterBlocker
@@ -94,11 +95,16 @@ private func eventTapCallback(
 
     // Handle event tap disabled (happens when user locks screen, etc)
     if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-        // Re-enable the tap
         if let refcon = refcon {
             let interceptor = Unmanaged<EventInterceptor>.fromOpaque(refcon).takeUnretainedValue()
             if let tap = interceptor.eventTap {
                 CGEvent.tapEnable(tap: tap, enable: true)
+                // Check if re-enable actually succeeded
+                if !CGEvent.tapIsEnabled(tap: tap) {
+                    DispatchQueue.main.async {
+                        interceptor.onTapDied?()
+                    }
+                }
             }
         }
         return Unmanaged.passRetained(event)

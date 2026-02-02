@@ -10,7 +10,6 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var blocker: ChatterBlocker
     let configManager: ConfigManager
-    let onSave: () -> Void
     let onToggleBlocking: (Bool) -> Void
 
     @State private var showingAddKey = false
@@ -18,7 +17,12 @@ struct SettingsView: View {
     @State private var isListeningForKey = false
     @State private var newKeyThreshold: UInt64 = 100
     @State private var eventMonitor: Any?
-    @State private var settingsSaved = false
+    @State private var showResetConfirmation = false
+    @State private var launchAtLogin: Bool = false
+    @State private var showDuplicateKeyAlert = false
+    @State private var duplicateKeyCode: CGKeyCode?
+    @State private var keyCaptured = false
+    @State private var statisticsSearch = ""
 
     var body: some View {
         TabView {
@@ -51,7 +55,13 @@ struct SettingsView: View {
         .onChange(of: blocker.isEnabled) { _, newValue in
             onToggleBlocking(newValue)
         }
-        .onChange(of: blocker.globalThreshold) { onSave() }
+        .onChange(of: blocker.globalThreshold) { save() }
+        .onChange(of: blocker.minimumChatterTime) { save() }
+        .onChange(of: blocker.measureFromRelease) { save() }
+    }
+
+    private func save() {
+        configManager.saveSettings(from: blocker)
     }
 
     // MARK: - Main Settings Tab
@@ -62,11 +72,16 @@ struct SettingsView: View {
                 Toggle("Enable Chatter Blocking", isOn: $blocker.isEnabled)
                     .toggleStyle(.switch)
 
-                HStack {
-                    Text("Global Threshold:")
-                    Spacer()
-                    Text("\(blocker.globalThreshold) ms")
-                        .foregroundColor(.secondary)
+                LabeledContent("Global Threshold:") {
+                    HStack(spacing: 4) {
+                        TextField("", value: $blocker.globalThreshold, format: .number)
+                            .frame(width: 60)
+                            .multilineTextAlignment(.trailing)
+                            .textFieldStyle(.roundedBorder)
+                        Text("ms")
+                            .foregroundColor(.secondary)
+                    }
+                    .fixedSize()
                 }
 
                 Slider(value: Binding(
@@ -81,60 +96,54 @@ struct SettingsView: View {
             }
 
             Section("Advanced") {
-                HStack {
-                    Text("Minimum Chatter Time:")
-                    Spacer()
-                    TextField("ms", value: $blocker.minimumChatterTime, format: .number)
-                        .frame(width: 60)
-                        .multilineTextAlignment(.trailing)
-                    Text("ms")
-                        .foregroundColor(.secondary)
+                LabeledContent("Minimum Chatter Time:") {
+                    HStack(spacing: 4) {
+                        TextField("", value: $blocker.minimumChatterTime, format: .number)
+                            .frame(width: 60)
+                            .multilineTextAlignment(.trailing)
+                            .textFieldStyle(.roundedBorder)
+                        Text("ms")
+                            .foregroundColor(.secondary)
+                    }
+                    .fixedSize()
                 }
 
                 Toggle("Measure from key release", isOn: $blocker.measureFromRelease)
                     .toggleStyle(.switch)
 
-                Text("Set minimum time to ignore very fast inputs (0 = disabled)")
+                Text("Events faster than this are always blocked, regardless of the global threshold (0 = disabled)")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
 
             Section {
-                HStack {
-                    Button(action: {
-                        onSave()
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            settingsSaved = true
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                settingsSaved = false
-                            }
-                        }
-                    }) {
-                        HStack(spacing: 6) {
-                            if settingsSaved {
-                                Image(systemName: "checkmark.circle")
-                                    .transition(.scale.combined(with: .opacity))
-                            }
-                            Text(settingsSaved ? "Saved!" : "Save Settings")
-                        }
-                        .frame(minWidth: 100)
+                Toggle("Launch at Login", isOn: $launchAtLogin)
+                    .toggleStyle(.switch)
+                    .onChange(of: launchAtLogin) { _, newValue in
+                        configManager.setStartAtLogin(newValue)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(settingsSaved ? .green : .accentColor)
+            }
 
-                    Spacer()
-
-                    Button("Reset to Defaults") {
-                        resetToDefaults()
-                    }
-                    .buttonStyle(.bordered)
+            Section {
+                Button("Reset to Defaults") {
+                    showResetConfirmation = true
                 }
+                .buttonStyle(.bordered)
             }
         }
         .formStyle(.grouped)
         .padding()
+        .onAppear {
+            launchAtLogin = configManager.getStartAtLogin()
+        }
+        .alert("Reset to Defaults?", isPresented: $showResetConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Reset", role: .destructive) {
+                resetToDefaults()
+            }
+        } message: {
+            Text("This will reset all thresholds and disable chatter blocking.")
+        }
     }
 
     // MARK: - Key Configuration Tab
@@ -185,12 +194,13 @@ struct SettingsView: View {
                             TextField("Threshold",
                                 value: Binding(
                                     get: { customThresholds[keyCode] ?? 100 },
-                                    set: { blocker.setThreshold($0, for: keyCode); onSave() }
+                                    set: { blocker.setThreshold($0, for: keyCode); save() }
                                 ),
                                 format: .number
                             )
                             .frame(width: 60)
                             .multilineTextAlignment(.trailing)
+                            .textFieldStyle(.roundedBorder)
 
                             Text("ms")
                                 .foregroundColor(.secondary)
@@ -199,7 +209,7 @@ struct SettingsView: View {
 
                             Button(role: .destructive) {
                                 blocker.removeThreshold(for: keyCode)
-                                onSave()
+                                save()
                             } label: {
                                 Image(systemName: "xmark.circle.fill")
                                     .foregroundColor(.red)
@@ -228,33 +238,31 @@ struct SettingsView: View {
                     .foregroundColor(.secondary)
             } else if let keyCode = newKeyCode {
                 VStack(spacing: 12) {
-                    Text("Key: \(KeyCodeMapper.keyName(for: keyCode))")
+                    Text(KeyCodeMapper.keyName(for: keyCode))
                         .font(.title2)
                         .fontDesign(.monospaced)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(.quaternary))
+                        .scaleEffect(keyCaptured ? 1.0 : 0.8)
+                        .animation(.spring(duration: 0.3), value: keyCaptured)
 
                     HStack {
                         Text("Threshold:")
                         TextField("ms", value: $newKeyThreshold, format: .number)
                             .frame(width: 60)
+                            .textFieldStyle(.roundedBorder)
                         Text("ms")
                     }
 
                     HStack(spacing: 12) {
                         Button("Cancel") {
-                            cleanupKeyListener()
-                            showingAddKey = false
-                            newKeyCode = nil
-                            newKeyThreshold = 100
+                            dismissAddKeySheet()
                         }
                         .buttonStyle(.bordered)
 
                         Button("Add") {
-                            blocker.setThreshold(newKeyThreshold, for: keyCode)
-                            onSave()
-                            cleanupKeyListener()
-                            showingAddKey = false
-                            newKeyCode = nil
-                            newKeyThreshold = 100
+                            addOrUpdateKey(keyCode: keyCode)
                         }
                         .buttonStyle(.borderedProminent)
                     }
@@ -262,13 +270,47 @@ struct SettingsView: View {
             }
         }
         .padding(40)
-        .frame(width: 350, height: 200)
+        .frame(width: 400, height: 220)
         .onAppear {
             startKeyListener()
         }
         .onDisappear {
             cleanupKeyListener()
         }
+        .alert("Key already configured", isPresented: $showDuplicateKeyAlert) {
+            Button("Update") {
+                if let keyCode = duplicateKeyCode {
+                    blocker.setThreshold(newKeyThreshold, for: keyCode)
+                    save()
+                }
+                dismissAddKeySheet()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            if let keyCode = duplicateKeyCode {
+                Text("\(KeyCodeMapper.keyName(for: keyCode)) already has a custom threshold. Update it to \(newKeyThreshold) ms?")
+            }
+        }
+    }
+
+    private func addOrUpdateKey(keyCode: CGKeyCode) {
+        let existingThresholds = blocker.getCustomThresholds()
+        if existingThresholds[keyCode] != nil {
+            duplicateKeyCode = keyCode
+            showDuplicateKeyAlert = true
+        } else {
+            blocker.setThreshold(newKeyThreshold, for: keyCode)
+            save()
+            dismissAddKeySheet()
+        }
+    }
+
+    private func dismissAddKeySheet() {
+        cleanupKeyListener()
+        showingAddKey = false
+        newKeyCode = nil
+        newKeyThreshold = 100
+        keyCaptured = false
     }
 
     // MARK: - Key Listener Helpers
@@ -291,6 +333,7 @@ struct SettingsView: View {
             // Store the captured key
             newKeyCode = keyCode
             isListeningForKey = false
+            keyCaptured = true
 
             // Remove the event monitor after capturing
             cleanupKeyListener()
@@ -310,15 +353,18 @@ struct SettingsView: View {
 
     // MARK: - Statistics Tab
 
-    private var sortedStatistics: [(key: CGKeyCode, value: (presses: Int, chatters: Int))] {
-        // Sort statistics: Most blocked keys appear at the top
-        // Primary sort: by blocked count (descending)
-        // Secondary sort: by key code (ascending) for ties
-        return blocker.statistics.sorted { first, second in
+    private var filteredStatistics: [(key: CGKeyCode, value: (presses: Int, chatters: Int))] {
+        let sorted = blocker.statistics.sorted { first, second in
             if first.value.chatters != second.value.chatters {
                 return first.value.chatters > second.value.chatters
             }
             return first.key < second.key
+        }
+        if statisticsSearch.isEmpty {
+            return sorted
+        }
+        return sorted.filter { keyCode, _ in
+            KeyCodeMapper.keyName(for: keyCode).localizedCaseInsensitiveContains(statisticsSearch)
         }
     }
 
@@ -337,6 +383,17 @@ struct SettingsView: View {
             }
             .padding()
 
+            if blocker.statistics.count > 10 {
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.secondary)
+                    TextField("Filter keys...", text: $statisticsSearch)
+                        .textFieldStyle(.roundedBorder)
+                }
+                .padding(.horizontal)
+                .padding(.bottom, 8)
+            }
+
             Divider()
 
             if blocker.statistics.isEmpty {
@@ -351,7 +408,7 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List {
-                    ForEach(sortedStatistics, id: \.key) { keyCode, stats in
+                    ForEach(filteredStatistics, id: \.key) { keyCode, stats in
                         HStack {
                             Text(KeyCodeMapper.keyName(for: keyCode))
                                 .font(.system(.body, design: .monospaced))
@@ -389,7 +446,10 @@ struct SettingsView: View {
         blocker.globalThreshold = 100
         blocker.minimumChatterTime = 0
         blocker.measureFromRelease = false
+        blocker.removeAllThresholds()
         blocker.resetTimingData()
-        onSave()
+        launchAtLogin = false
+        configManager.setStartAtLogin(false)
+        save()
     }
 }
