@@ -39,6 +39,10 @@ Settings are accessible from the menu bar icon → **Settings...**
 
 Settings persist via `UserDefaults`.
 
+## Tested Hardware
+
+- ASUS ROG Azoth — 100ms global threshold, no per-key overrides needed
+
 ## Requirements
 
 - macOS 14.0+
