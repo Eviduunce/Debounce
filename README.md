@@ -4,7 +4,7 @@ Stop annoying double-typing caused by mechanical keyboard chatter.
 
 KCBforMac prevents unwanted repeated keystrokes by blocking key presses that occur too quickly in succession. Set a global threshold or configure individual keys that misbehave.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Grant Accessibility Permissions
 
@@ -31,13 +31,13 @@ KCBforMac prevents unwanted repeated keystrokes by blocking key presses that occ
 5. **Statistics Tab**: Shows statistics of all keys, including blocked keystrokes
 6. **Log Tab**: View real-time chatter blocking events
 
-## 📊 How It Works
+## How It Works
 
 - **Global Threshold**: Blocks any key press that occurs within X milliseconds of the previous press
 - **Per-Key Threshold**: Set custom thresholds for specific keys that chatter more
 - **Timing**: Measures from last key press (or release, if configured)
 
-## 🔍 Troubleshooting
+## Troubleshooting
 
 ### Can't find the app
 
@@ -49,7 +49,7 @@ This is a **menu bar app** (not a Dock app). Look in the top-right corner of you
 2. **Enable the blocker**: Click the menu bar icon and select "Enable" (icon should be filled, not hollow)
 3. **Adjust threshold**: Try increasing the global threshold in Settings, or add a custom threshold for specific problematic keys
 
-## ⚙️ Configuration Tips
+## Configuration Tips
 
 ### Example for a chattering 'H' key:
 
@@ -65,12 +65,12 @@ This is a **menu bar app** (not a Dock app). Look in the top-right corner of you
 2. Type naturally
 3. Watch for entries showing blocked events with time deltas
 
-## 📝 Requirements
+## Requirements
 
 - macOS 14.0 or later
 - Accessibility permissions (app will prompt on first launch)
 
-## 🔧 Development
+## Development
 
 ### Build Requirements
 - macOS 14.0 or later
@@ -83,7 +83,7 @@ This is a **menu bar app** (not a Dock app). Look in the top-right corner of you
 - `ConfigManager.swift` - Settings persistence
 - `KCBforMacApp.swift` - Menu bar app & main logic
 
-## 📜 License
+## License
 
 MIT License. See [LICENSE](LICENSE) for details.
 
