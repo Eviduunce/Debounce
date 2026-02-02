@@ -10,9 +10,22 @@
 		254BDB232E94ED0900073081 /* KCBforMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KCBforMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		254BDB312E94ED0A00073081 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 254BDB222E94ED0900073081 /* KCBforMac */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		254BDB252E94ED0900073081 /* KCBforMac */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				254BDB312E94ED0A00073081 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
+			);
 			path = KCBforMac;
 			sourceTree = "<group>";
 		};

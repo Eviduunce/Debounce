@@ -121,16 +121,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 blocker: chatterBlocker,
                 configManager: configManager,
                 onSave: { [weak self] in
-                    self?.configManager.saveSettings(from: self!.chatterBlocker)
-                    self?.updateMenuBarIcon()
+                    guard let self else { return }
+                    self.configManager.saveSettings(from: self.chatterBlocker)
+                    self.updateMenuBarIcon()
+                },
+                onToggleBlocking: { [weak self] enabled in
+                    guard let self else { return }
+                    if enabled {
+                        self.startBlocking()
+                    } else {
+                        self.stopBlocking()
+                    }
+                    self.configManager.saveSettings(from: self.chatterBlocker)
+                    self.updateMenuBarIcon()
+                    self.createMenu()
                 }
             )
 
             let hostingController = NSHostingController(rootView: settingsView)
             let window = NSWindow(contentViewController: hostingController)
             window.title = "KCBforMac Settings"
-            window.styleMask = [.titled, .closable, .miniaturizable]
-            window.setContentSize(NSSize(width: 550, height: 450))
+            window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+            window.setContentSize(NSSize(width: 600, height: 500))
             window.center()
 
             settingsWindow = window

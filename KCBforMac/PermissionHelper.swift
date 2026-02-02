@@ -23,15 +23,9 @@ class PermissionHelper {
         _ = AXIsProcessTrustedWithOptions(options)
     }
 
-    /// Open System Preferences to Accessibility panel
+    /// Open System Settings to Accessibility panel
     static func openAccessibilityPreferences() {
-        if #available(macOS 13.0, *) {
-            // macOS 13+ uses new System Settings app
-            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
-        } else {
-            // macOS 12 and earlier use System Preferences
-            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
-        }
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
     }
 
     /// Show alert explaining permission requirement

@@ -26,8 +26,8 @@ class ChatterBlocker: ObservableObject {
     private var keyDownWasBlocked: [CGKeyCode: Bool] = [:]
 
     // MARK: - Configuration
-    var minimumChatterTime: UInt64 = 0 // ms - ignores chatter faster than this (helps with buggy inputs)
-    var measureFromRelease: Bool = false // if true, measure from last release instead of last press
+    @Published var minimumChatterTime: UInt64 = 0 // ms - ignores chatter faster than this (helps with buggy inputs)
+    @Published var measureFromRelease: Bool = false // if true, measure from last release instead of last press
     private let maxLogEntries = 100
 
     // MARK: - Timing

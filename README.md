@@ -1,8 +1,8 @@
 # KCBforMac - Keyboard Chatter Blocker for macOS
 
-macOS port of FreneticLLC's Windows Keyboard Chatter Blocker application.
+Stop annoying double-typing caused by mechanical keyboard chatter.
 
-See https://github.com/FreneticLLC/KeyboardChatterBlocker for more info.
+KCBforMac prevents unwanted repeated keystrokes by blocking key presses that occur too quickly in succession. Set a global threshold or configure individual keys that misbehave.
 
 ## 🚀 Quick Start
 
@@ -15,14 +15,14 @@ See https://github.com/FreneticLLC/KeyboardChatterBlocker for more info.
 3. Find **KCBforMac** in the list
 4. Toggle it **ON**
 
-### 3. Enable Chatter Blocking
+### 2. Enable Chatter Blocking
 
 1. Look for the **keyboard icon** in your menu bar (top-right of screen)
 2. Click the icon
 3. Click **"Enable"** in the menu
 4. The icon should change from hollow to filled
 
-### 4. Configure Settings
+### 3. Configure Settings
 
 1. Click the menu bar icon
 2. Select **"Settings..."**
@@ -39,21 +39,15 @@ See https://github.com/FreneticLLC/KeyboardChatterBlocker for more info.
 
 ## 🔍 Troubleshooting
 
-### App doesn't appear to block chatter
-
-**Common Issues:**
-1. **No accessibility permissions** → Check System Settings → Accessibility
-2. **Blocker not enabled** → Check menu bar icon (should be filled, not hollow)
-3. **Threshold too low** → Increase global threshold or add per-key threshold
-4. **App not running** → Check Activity Monitor for "KCBforMac" process
-
 ### Can't find the app
 
 This is a **menu bar app** (not a Dock app). Look in the top-right corner of your screen for a keyboard icon.
 
-### Keyboard events not detected
+### Chatter blocking not working
 
-Make sure accessibility permissions are granted in System Settings → Privacy & Security → Accessibility.
+1. **Check accessibility permissions**: Go to System Settings → Privacy & Security → Accessibility and make sure KCBforMac is enabled
+2. **Enable the blocker**: Click the menu bar icon and select "Enable" (icon should be filled, not hollow)
+3. **Adjust threshold**: Try increasing the global threshold in Settings, or add a custom threshold for specific problematic keys
 
 ## ⚙️ Configuration Tips
 
@@ -71,16 +65,17 @@ Make sure accessibility permissions are granted in System Settings → Privacy &
 2. Type naturally
 3. Watch for entries showing blocked events with time deltas
 
-## 📝 Known Issues
-
-- **Menu bar icon sometimes doesn't appear**: Restart the app or check Activity Monitor
-- **macOS 13.0+ required**: Uses newer SwiftUI APIs
-- **Accessibility permissions**: May need to be re-granted after rebuilding the app
-- **Info.plist warning**: Xcode may show a warning about Info.plist in Copy Bundle Resources (this is harmless)
-
-## 🔧 Requirements
+## 📝 Requirements
 
 - macOS 14.0 or later
+- Accessibility permissions (app will prompt on first launch)
+
+## 🔧 Development
+
+### Build Requirements
+- macOS 14.0 or later
+- Xcode 15.0 or later
+- App Sandbox **DISABLED** (required for CGEventTap)
 
 ### Key Files
 - `EventInterceptor.swift` - CGEventTap implementation
@@ -90,14 +85,6 @@ Make sure accessibility permissions are granted in System Settings → Privacy &
 
 ## 📜 License
 
-Based on the original Windows Keyboard Chatter Blocker:
-https://github.com/FreneticLLC/KeyboardChatterBlocker
+MIT License. See [LICENSE](LICENSE) for details.
 
-The MIT License (MIT)
-
-Copyright (c) 2019-2024 Alex "mcmonkey" Goodwin
-Copyright (c) 2024-2025 Frenetic LLC
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+Inspired by the original Windows [Keyboard Chatter Blocker](https://github.com/FreneticLLC/KeyboardChatterBlocker) by Alex "mcmonkey" Goodwin / Frenetic LLC.

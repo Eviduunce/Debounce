@@ -28,16 +28,17 @@ class ConfigManager {
     /// Save all settings from the ChatterBlocker
     func saveSettings(from blocker: ChatterBlocker) {
         defaults.set(blocker.isEnabled, forKey: Keys.isEnabled)
-        defaults.set(blocker.globalThreshold, forKey: Keys.globalThreshold)
-        defaults.set(blocker.minimumChatterTime, forKey: Keys.minimumChatterTime)
+        defaults.set(Int(blocker.globalThreshold), forKey: Keys.globalThreshold)
+        defaults.set(Int(blocker.minimumChatterTime), forKey: Keys.minimumChatterTime)
         defaults.set(blocker.measureFromRelease, forKey: Keys.measureFromRelease)
 
-        // Save custom key thresholds as dictionary [String: UInt64]
+        // Save custom key thresholds as [String: Int]
         let customThresholds = blocker.getCustomThresholds()
-        let thresholdsDict = customThresholds.mapKeys { String($0) }
+        var thresholdsDict: [String: Int] = [:]
+        for (key, value) in customThresholds {
+            thresholdsDict[String(key)] = Int(value)
+        }
         defaults.set(thresholdsDict, forKey: Keys.customThresholds)
-
-        defaults.synchronize()
     }
 
     // MARK: - Load Configuration
@@ -46,21 +47,21 @@ class ConfigManager {
     func loadSettings(into blocker: ChatterBlocker) {
         blocker.isEnabled = defaults.bool(forKey: Keys.isEnabled)
 
-        if let globalThreshold = defaults.object(forKey: Keys.globalThreshold) as? UInt64 {
-            blocker.globalThreshold = globalThreshold
+        let globalThreshold = defaults.integer(forKey: Keys.globalThreshold)
+        if globalThreshold > 0 {
+            blocker.globalThreshold = UInt64(globalThreshold)
         }
 
-        if let minimumChatterTime = defaults.object(forKey: Keys.minimumChatterTime) as? UInt64 {
-            blocker.minimumChatterTime = minimumChatterTime
-        }
+        let minimumChatterTime = defaults.integer(forKey: Keys.minimumChatterTime)
+        blocker.minimumChatterTime = UInt64(minimumChatterTime)
 
         blocker.measureFromRelease = defaults.bool(forKey: Keys.measureFromRelease)
 
         // Load custom key thresholds
-        if let thresholdsDict = defaults.dictionary(forKey: Keys.customThresholds) as? [String: UInt64] {
+        if let thresholdsDict = defaults.dictionary(forKey: Keys.customThresholds) as? [String: Int] {
             for (keyString, threshold) in thresholdsDict {
                 if let keyCode = CGKeyCode(keyString) {
-                    blocker.setThreshold(threshold, for: keyCode)
+                    blocker.setThreshold(UInt64(threshold), for: keyCode)
                 }
             }
         }
@@ -76,18 +77,5 @@ class ConfigManager {
     /// Set start at login preference
     func setStartAtLogin(_ enabled: Bool) {
         defaults.set(enabled, forKey: Keys.startAtLogin)
-        defaults.synchronize()
-    }
-}
-
-// MARK: - Helper Extensions
-
-private extension Dictionary {
-    func mapKeys<T: Hashable>(_ transform: (Key) -> T) -> [T: Value] {
-        var result: [T: Value] = [:]
-        for (key, value) in self {
-            result[transform(key)] = value
-        }
-        return result
     }
 }

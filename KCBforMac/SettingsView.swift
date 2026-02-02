@@ -11,6 +11,7 @@ struct SettingsView: View {
     @ObservedObject var blocker: ChatterBlocker
     let configManager: ConfigManager
     let onSave: () -> Void
+    let onToggleBlocking: (Bool) -> Void
 
     @State private var showingAddKey = false
     @State private var newKeyCode: CGKeyCode?
@@ -47,7 +48,9 @@ struct SettingsView: View {
         }
         .frame(minWidth: 600, idealWidth: 700, maxWidth: .infinity,
                minHeight: 500, idealHeight: 600, maxHeight: .infinity)
-        .onChange(of: blocker.isEnabled) { onSave() }
+        .onChange(of: blocker.isEnabled) { _, newValue in
+            onToggleBlocking(newValue)
+        }
         .onChange(of: blocker.globalThreshold) { onSave() }
     }
 
