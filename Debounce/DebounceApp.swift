@@ -1,6 +1,6 @@
 //
-//  KCBforMacApp.swift
-//  KCBforMac
+//  DebounceApp.swift
+//  Debounce
 //
 //  Created by Timo Leisengang on 07.10.25.
 //
@@ -9,7 +9,7 @@ import SwiftUI
 import UserNotifications
 
 @main
-struct KCBforMacApp: App {
+struct DebounceApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
@@ -78,7 +78,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         if let button = statusItem?.button {
             let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .regular)
-            button.image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: "Keyboard Chatter Blocker")?
+            button.image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: "Debounce")?
                 .withSymbolConfiguration(config)
             button.action = #selector(statusBarButtonClicked)
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
@@ -117,7 +117,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Quit
         menu.addItem(NSMenuItem(
-            title: "Quit Keyboard Chatter Blocker",
+            title: "Quit Debounce",
             action: #selector(quitApp),
             keyEquivalent: "q"
         ))
@@ -175,7 +175,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
             let hostingController = NSHostingController(rootView: settingsView)
             let window = NSWindow(contentViewController: hostingController)
-            window.title = "Keyboard Chatter Blocker — Settings"
+            window.title = "Debounce — Settings"
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
             window.setContentSize(NSSize(width: 600, height: 500))
             window.center()
@@ -211,10 +211,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard let button = statusItem?.button else { return }
         let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .regular)
         if chatterBlocker.isEnabled {
-            button.image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: "Keyboard Chatter Blocker — Enabled")?
+            button.image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: "Debounce — Enabled")?
                 .withSymbolConfiguration(config)
         } else {
-            button.image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: "Keyboard Chatter Blocker — Disabled")?
+            button.image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: "Debounce — Disabled")?
                 .withSymbolConfiguration(config)
             button.appearsDisabled = true
         }
@@ -248,7 +248,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Update the icon to indicate error
         if let button = statusItem?.button {
             let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .regular)
-            button.image = NSImage(systemSymbolName: "keyboard.badge.exclamationmark", accessibilityDescription: "Keyboard Chatter Blocker — Error")?
+            button.image = NSImage(systemSymbolName: "keyboard.badge.exclamationmark", accessibilityDescription: "Debounce — Error")?
                 .withSymbolConfiguration(config)
         }
 

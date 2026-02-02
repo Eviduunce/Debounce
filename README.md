@@ -1,4 +1,4 @@
-# KCBforMac
+# Debounce
 
 A macOS menu bar utility that blocks keyboard chatter — the unintended duplicate keystrokes caused by mechanical switch contact bounce. It uses a `CGEventTap` to intercept key events system-wide and suppresses repeated presses that occur within a configurable time threshold.
 
@@ -8,14 +8,14 @@ Inspired by the Windows [Keyboard Chatter Blocker](https://github.com/FreneticLL
 
 This app requires **Accessibility permissions** to intercept keyboard events system-wide via `CGEventTap`. Without this permission, the app cannot function. macOS will prompt you on first launch, or you can enable it manually:
 
-**System Settings → Privacy & Security → Accessibility → KCBforMac → ON**
+**System Settings → Privacy & Security → Accessibility → Debounce → ON**
 
 If you move the app after granting permissions, macOS may revoke them. Re-enable in System Settings if this happens.
 
 ## Installation
 
-1. Download `KCBforMac.zip` from the [latest release](https://github.com/Eviduunce/KCBforMac/releases/latest)
-2. Unzip and move `KCBforMac.app` to `/Applications`
+1. Download `Debounce.zip` from the [latest release](https://github.com/Eviduunce/Debounce/releases/latest)
+2. Unzip and move `Debounce.app` to `/Applications`
 3. Launch the app — it runs in the menu bar (no Dock icon)
 4. Grant Accessibility permissions when prompted (see above)
 5. Click the keyboard icon in the menu bar and select **Enable**
@@ -59,13 +59,13 @@ Settings persist via `UserDefaults`.
 ## Building
 
 - Xcode 15.0+
-- Open `KCBforMac.xcodeproj` and build
+- Open `Debounce.xcodeproj` and build
 
 ### Project Structure
 
 | File | Purpose |
 |------|---------|
-| `KCBforMacApp.swift` | App entry point, menu bar setup, `AppDelegate` |
+| `DebounceApp.swift` | App entry point, menu bar setup, `AppDelegate` |
 | `EventInterceptor.swift` | `CGEventTap` creation and event routing |
 | `ChatterBlocker.swift` | Core chatter detection logic |
 | `ConfigManager.swift` | `UserDefaults` persistence |

@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		254BDB232E94ED0900073081 /* KCBforMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KCBforMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		254BDB232E94ED0900073081 /* Debounce.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Debounce.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -16,17 +16,17 @@
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 254BDB222E94ED0900073081 /* KCBforMac */;
+			target = 254BDB222E94ED0900073081 /* Debounce */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		254BDB252E94ED0900073081 /* KCBforMac */ = {
+		254BDB252E94ED0900073081 /* Debounce */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				254BDB312E94ED0A00073081 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
 			);
-			path = KCBforMac;
+			path = Debounce;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -45,7 +45,7 @@
 		254BDB1A2E94ED0900073081 = {
 			isa = PBXGroup;
 			children = (
-				254BDB252E94ED0900073081 /* KCBforMac */,
+				254BDB252E94ED0900073081 /* Debounce */,
 				254BDB242E94ED0900073081 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -53,7 +53,7 @@
 		254BDB242E94ED0900073081 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				254BDB232E94ED0900073081 /* KCBforMac.app */,
+				254BDB232E94ED0900073081 /* Debounce.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -61,9 +61,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		254BDB222E94ED0900073081 /* KCBforMac */ = {
+		254BDB222E94ED0900073081 /* Debounce */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 254BDB2E2E94ED0A00073081 /* Build configuration list for PBXNativeTarget "KCBforMac" */;
+			buildConfigurationList = 254BDB2E2E94ED0A00073081 /* Build configuration list for PBXNativeTarget "Debounce" */;
 			buildPhases = (
 				254BDB1F2E94ED0900073081 /* Sources */,
 				254BDB202E94ED0900073081 /* Frameworks */,
@@ -74,13 +74,13 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				254BDB252E94ED0900073081 /* KCBforMac */,
+				254BDB252E94ED0900073081 /* Debounce */,
 			);
-			name = KCBforMac;
+			name = Debounce;
 			packageProductDependencies = (
 			);
-			productName = KCBforMac;
-			productReference = 254BDB232E94ED0900073081 /* KCBforMac.app */;
+			productName = Debounce;
+			productReference = 254BDB232E94ED0900073081 /* Debounce.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -98,7 +98,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 254BDB1E2E94ED0900073081 /* Build configuration list for PBXProject "KCBforMac" */;
+			buildConfigurationList = 254BDB1E2E94ED0900073081 /* Build configuration list for PBXProject "Debounce" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -112,7 +112,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				254BDB222E94ED0900073081 /* KCBforMac */,
+				254BDB222E94ED0900073081 /* Debounce */,
 			);
 		};
 /* End PBXProject section */
@@ -263,7 +263,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = KCBforMac/KCBforMac.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Debounce/Debounce.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -272,7 +272,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = KCBforMac/Info.plist;
+				INFOPLIST_FILE = Debounce/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -280,7 +280,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.leisengang.KCBforMac;
+				PRODUCT_BUNDLE_IDENTIFIER = com.leisengang.Debounce;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -297,7 +297,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = KCBforMac/KCBforMac.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Debounce/Debounce.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -306,7 +306,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = KCBforMac/Info.plist;
+				INFOPLIST_FILE = Debounce/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -314,7 +314,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.leisengang.KCBforMac;
+				PRODUCT_BUNDLE_IDENTIFIER = com.leisengang.Debounce;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -329,7 +329,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		254BDB1E2E94ED0900073081 /* Build configuration list for PBXProject "KCBforMac" */ = {
+		254BDB1E2E94ED0900073081 /* Build configuration list for PBXProject "Debounce" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				254BDB2C2E94ED0A00073081 /* Debug */,
@@ -338,7 +338,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		254BDB2E2E94ED0A00073081 /* Build configuration list for PBXNativeTarget "KCBforMac" */ = {
+		254BDB2E2E94ED0A00073081 /* Build configuration list for PBXNativeTarget "Debounce" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				254BDB2F2E94ED0A00073081 /* Debug */,

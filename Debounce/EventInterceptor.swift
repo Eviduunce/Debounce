@@ -1,6 +1,6 @@
 //
 //  EventInterceptor.swift
-//  KCBforMac
+//  Debounce
 //
 //  Created by Timo Leisengang on 07.10.25.
 //

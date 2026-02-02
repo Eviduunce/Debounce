@@ -1,6 +1,6 @@
 //
 //  ConfigManager.swift
-//  KCBforMac
+//  Debounce
 //
 //  Created by Timo Leisengang on 07.10.25.
 //
@@ -13,6 +13,39 @@ import ServiceManagement
 class ConfigManager {
 
     private let defaults = UserDefaults.standard
+
+    init() {
+        migrateFromOldBundleIfNeeded()
+    }
+
+    /// Migrate settings from old bundle ID (com.leisengang.KCBforMac) on first launch
+    private func migrateFromOldBundleIfNeeded() {
+        let migrationKey = "didMigrateFromKCBforMac"
+        guard !defaults.bool(forKey: migrationKey) else { return }
+
+        guard let oldDefaults = UserDefaults(suiteName: "com.leisengang.KCBforMac") else {
+            defaults.set(true, forKey: migrationKey)
+            return
+        }
+
+        let oldDict = oldDefaults.dictionaryRepresentation()
+        guard !oldDict.isEmpty else {
+            defaults.set(true, forKey: migrationKey)
+            return
+        }
+
+        // Copy all keys from old domain
+        for (key, value) in oldDict {
+            defaults.set(value, forKey: key)
+        }
+
+        // Clean up old domain
+        for key in oldDict.keys {
+            oldDefaults.removeObject(forKey: key)
+        }
+
+        defaults.set(true, forKey: migrationKey)
+    }
 
     // Keys for UserDefaults
     private enum Keys {

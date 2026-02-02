@@ -1,6 +1,6 @@
 //
 //  PermissionHelper.swift
-//  KCBforMac
+//  Debounce
 //
 //  Created by Timo Leisengang on 07.10.25.
 //
@@ -33,7 +33,7 @@ class PermissionHelper {
         let alert = NSAlert()
         alert.messageText = "Accessibility Permission Required"
         alert.informativeText = """
-        KCBforMac needs accessibility permissions to monitor keyboard events and block chatter.
+        Debounce needs accessibility permissions to monitor keyboard events and block chatter.
 
         Click "Open System Settings" to grant permission, then restart the app.
         """
