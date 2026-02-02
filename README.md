@@ -14,8 +14,8 @@ If you move the app after granting permissions, macOS may revoke them. Re-enable
 
 ## Installation
 
-1. Download `Debounce.zip` from the [latest release](https://github.com/Eviduunce/Debounce/releases/latest)
-2. Unzip and move `Debounce.app` to `/Applications`
+1. Download the `.dmg` from the [latest release](https://github.com/Eviduunce/Debounce/releases/latest)
+2. Open the DMG and drag `Debounce.app` to the Applications folder
 3. Launch the app — it runs in the menu bar (no Dock icon)
 4. Grant Accessibility permissions when prompted (see above)
 5. Click the keyboard icon in the menu bar and select **Enable**

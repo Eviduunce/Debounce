@@ -22,3 +22,6 @@ Carthage/Build/
 
 # Archives
 *.xcarchive
+
+# Installers
+*.dmg
