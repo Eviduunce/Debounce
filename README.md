@@ -25,7 +25,7 @@ If you move the app after granting permissions, macOS may revoke them. Re-enable
 - **Global threshold** — blocks repeated presses of any key within a configurable window (default: 100ms)
 - **Per-key thresholds** — set different thresholds for individual keys
 - **Measurement mode** — measure interval from last key press or last key release
-- **Minimum chatter time** — ignore events faster than a floor value (for buggy hardware)
+- **Minimum chatter time** — ignore ultra-fast events in chatter detection (for buggy hardware)
 - **Statistics** — tracks press counts and blocked chatter per key
 - **Live log** — shows blocked events with timestamps and time deltas
 

@@ -111,7 +111,7 @@ struct SettingsView: View {
                 Toggle("Measure from key release", isOn: $blocker.measureFromRelease)
                     .toggleStyle(.switch)
 
-                Text("Events faster than this are always blocked, regardless of the global threshold (0 = disabled)")
+                Text("Events faster than this are ignored by chatter detection (0 = disabled)")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

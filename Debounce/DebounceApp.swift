@@ -258,8 +258,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         content.body = "The keyboard event monitor was terminated. Re-enable from the menu bar."
         content.sound = .default
 
-        let request = UNNotificationRequest(identifier: "tapDied", content: content, trigger: nil)
-        UNUserNotificationCenter.current().add(request)
+        requestNotificationAuthorization { granted in
+            guard granted else { return }
+            let request = UNNotificationRequest(identifier: "tapDied", content: content, trigger: nil)
+            UNUserNotificationCenter.current().add(request)
+        }
+    }
+
+    private func requestNotificationAuthorization(completion: @escaping (Bool) -> Void) {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, _ in
+            completion(granted)
+        }
     }
 
 }
