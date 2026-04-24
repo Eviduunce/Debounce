@@ -22,11 +22,7 @@ class EventInterceptor {
 
     /// Start intercepting keyboard events
     func start() -> Bool {
-        // Check for accessibility permissions
-        let hasPermission = PermissionHelper.hasAccessibilityPermissions()
-
-        guard hasPermission else {
-            PermissionHelper.showPermissionAlert()
+        guard PermissionHelper.ensureAccessibilityPermissions() else {
             return false
         }
 

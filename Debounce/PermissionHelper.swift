@@ -17,10 +17,14 @@ class PermissionHelper {
         return AXIsProcessTrustedWithOptions(options)
     }
 
-    /// Request accessibility permissions with system prompt
-    static func requestAccessibilityPermissions() {
-        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-        _ = AXIsProcessTrustedWithOptions(options)
+    /// Check permissions, showing an explanatory alert with a link to System Settings if missing.
+    /// Returns the current trust state.
+    static func ensureAccessibilityPermissions() -> Bool {
+        if hasAccessibilityPermissions() {
+            return true
+        }
+        showPermissionAlert()
+        return false
     }
 
     /// Open System Settings to Accessibility panel
@@ -35,7 +39,7 @@ class PermissionHelper {
         alert.informativeText = """
         Debounce needs accessibility permissions to monitor keyboard events and block chatter.
 
-        Click "Open System Settings" to grant permission, then restart the app.
+        Click "Open System Settings" to grant permission, then enable Debounce again.
         """
         alert.alertStyle = .warning
         alert.addButton(withTitle: "Open System Settings")
