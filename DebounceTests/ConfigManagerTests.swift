@@ -11,6 +11,7 @@ private final class StubLaunchAtLoginService: LaunchAtLoginServicing {
     private let registrationError: Error?
     private(set) var registerCount = 0
     private(set) var unregisterCount = 0
+    private(set) var openSettingsCount = 0
 
     init(
         status: SMAppService.Status = .notRegistered,
@@ -29,6 +30,10 @@ private final class StubLaunchAtLoginService: LaunchAtLoginServicing {
 
     func unregister() throws {
         unregisterCount += 1
+    }
+
+    func openSystemSettingsLoginItems() {
+        openSettingsCount += 1
     }
 }
 
@@ -87,24 +92,40 @@ final class ConfigManagerTests: XCTestCase {
         XCTAssertEqual(service.unregisterCount, 1)
     }
 
-    func testDoesNotReregisterLaunchAtLoginThatRequiresApproval() throws {
+    func testEnablingLaunchAtLoginThatRequiresApprovalSurfacesGuidance() {
         let service = StubLaunchAtLoginService(status: .requiresApproval)
         let manager = ConfigManager(
             migrateLegacySettings: false,
             launchAtLoginService: service
         )
 
-        try manager.setStartAtLogin(true)
+        XCTAssertThrowsError(try manager.setStartAtLogin(true)) { error in
+            XCTAssertEqual(error as? LaunchAtLoginError, .approvalRequired)
+            XCTAssertTrue(error.localizedDescription.contains("System Settings"))
+            XCTAssertTrue(error.localizedDescription.contains("Login Items"))
+        }
 
         XCTAssertEqual(service.registerCount, 0)
     }
 
-    func testReportsLaunchAtLoginThatRequiresApprovalAsRegistered() {
+    func testReportsLaunchAtLoginThatRequiresApprovalAsNotEnabled() {
         let manager = ConfigManager(
             migrateLegacySettings: false,
             launchAtLoginService: StubLaunchAtLoginService(status: .requiresApproval)
         )
 
-        XCTAssertTrue(manager.getStartAtLogin())
+        XCTAssertFalse(manager.getStartAtLogin())
+    }
+
+    func testOpensLoginItemsSettingsThroughService() {
+        let service = StubLaunchAtLoginService()
+        let manager = ConfigManager(
+            migrateLegacySettings: false,
+            launchAtLoginService: service
+        )
+
+        manager.openLoginItemsSettings()
+
+        XCTAssertEqual(service.openSettingsCount, 1)
     }
 }

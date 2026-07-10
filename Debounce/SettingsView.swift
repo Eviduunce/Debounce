@@ -20,6 +20,7 @@ struct SettingsView: View {
     @State private var showResetConfirmation = false
     @State private var launchAtLogin: Bool = false
     @State private var launchAtLoginError: String?
+    @State private var launchAtLoginApprovalRequired = false
     @State private var showDuplicateKeyAlert = false
     @State private var duplicateKeyCode: CGKeyCode?
     @State private var keyCaptured = false
@@ -149,12 +150,18 @@ struct SettingsView: View {
             get: { launchAtLoginError != nil },
             set: { isPresented in
                 if !isPresented {
-                    launchAtLoginError = nil
+                    dismissLaunchAtLoginError()
                 }
             }
         )) {
+            if launchAtLoginApprovalRequired {
+                Button("Open Login Items Settings") {
+                    configManager.openLoginItemsSettings()
+                    dismissLaunchAtLoginError()
+                }
+            }
             Button("OK") {
-                launchAtLoginError = nil
+                dismissLaunchAtLoginError()
             }
         } message: {
             Text(launchAtLoginError ?? "An unknown error occurred.")
@@ -164,11 +171,17 @@ struct SettingsView: View {
     private func updateLaunchAtLogin(_ enabled: Bool) {
         do {
             try configManager.setStartAtLogin(enabled)
-            launchAtLogin = enabled
+            launchAtLogin = configManager.getStartAtLogin()
         } catch {
             launchAtLogin = configManager.getStartAtLogin()
+            launchAtLoginApprovalRequired = error as? LaunchAtLoginError == .approvalRequired
             launchAtLoginError = error.localizedDescription
         }
+    }
+
+    private func dismissLaunchAtLoginError() {
+        launchAtLoginError = nil
+        launchAtLoginApprovalRequired = false
     }
 
     // MARK: - Key Configuration Tab

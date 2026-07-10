@@ -9,10 +9,22 @@ import Foundation
 import CoreGraphics
 import ServiceManagement
 
+enum LaunchAtLoginError: LocalizedError, Equatable {
+    case approvalRequired
+
+    var errorDescription: String? {
+        switch self {
+        case .approvalRequired:
+            return "Launch at Login needs your approval in System Settings > General > Login Items."
+        }
+    }
+}
+
 protocol LaunchAtLoginServicing {
     var status: SMAppService.Status { get }
     func register() throws
     func unregister() throws
+    func openSystemSettingsLoginItems()
 }
 
 struct MainAppLaunchAtLoginService: LaunchAtLoginServicing {
@@ -26,6 +38,10 @@ struct MainAppLaunchAtLoginService: LaunchAtLoginServicing {
 
     func unregister() throws {
         try SMAppService.mainApp.unregister()
+    }
+
+    func openSystemSettingsLoginItems() {
+        SMAppService.openSystemSettingsLoginItems()
     }
 }
 
@@ -137,9 +153,9 @@ class ConfigManager {
 
     func getStartAtLogin() -> Bool {
         switch launchAtLoginService.status {
-        case .enabled, .requiresApproval:
+        case .enabled:
             return true
-        case .notRegistered, .notFound:
+        case .notRegistered, .requiresApproval, .notFound:
             return false
         @unknown default:
             return false
@@ -149,8 +165,10 @@ class ConfigManager {
     func setStartAtLogin(_ enabled: Bool) throws {
         if enabled {
             switch launchAtLoginService.status {
-            case .enabled, .requiresApproval:
+            case .enabled:
                 return
+            case .requiresApproval:
+                throw LaunchAtLoginError.approvalRequired
             case .notRegistered, .notFound:
                 try launchAtLoginService.register()
             @unknown default:
@@ -166,6 +184,10 @@ class ConfigManager {
                 try launchAtLoginService.unregister()
             }
         }
+    }
+
+    func openLoginItemsSettings() {
+        launchAtLoginService.openSystemSettingsLoginItems()
     }
 
     // MARK: - Statistics Persistence
