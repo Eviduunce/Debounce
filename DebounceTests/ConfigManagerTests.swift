@@ -1,3 +1,4 @@
+import ServiceManagement
 import XCTest
 @testable import Debounce
 
@@ -6,13 +7,29 @@ private enum LaunchAtLoginTestError: Error, Equatable {
 }
 
 private final class StubLaunchAtLoginService: LaunchAtLoginServicing {
-    var isEnabled = false
+    var status: SMAppService.Status
+    private let registrationError: Error?
+    private(set) var registerCount = 0
+    private(set) var unregisterCount = 0
 
-    func register() throws {
-        throw LaunchAtLoginTestError.registrationFailed
+    init(
+        status: SMAppService.Status = .notRegistered,
+        registrationError: Error? = LaunchAtLoginTestError.registrationFailed
+    ) {
+        self.status = status
+        self.registrationError = registrationError
     }
 
-    func unregister() throws {}
+    func register() throws {
+        registerCount += 1
+        if let registrationError {
+            throw registrationError
+        }
+    }
+
+    func unregister() throws {
+        unregisterCount += 1
+    }
 }
 
 final class ConfigManagerTests: XCTestCase {
@@ -44,5 +61,50 @@ final class ConfigManagerTests: XCTestCase {
         XCTAssertThrowsError(try manager.setStartAtLogin(true)) { error in
             XCTAssertEqual(error as? LaunchAtLoginTestError, .registrationFailed)
         }
+    }
+
+    func testDoesNotUnregisterWhenLaunchAtLoginIsAlreadyDisabled() throws {
+        let service = StubLaunchAtLoginService()
+        let manager = ConfigManager(
+            migrateLegacySettings: false,
+            launchAtLoginService: service
+        )
+
+        try manager.setStartAtLogin(false)
+
+        XCTAssertEqual(service.unregisterCount, 0)
+    }
+
+    func testUnregistersLaunchAtLoginThatRequiresApproval() throws {
+        let service = StubLaunchAtLoginService(status: .requiresApproval)
+        let manager = ConfigManager(
+            migrateLegacySettings: false,
+            launchAtLoginService: service
+        )
+
+        try manager.setStartAtLogin(false)
+
+        XCTAssertEqual(service.unregisterCount, 1)
+    }
+
+    func testDoesNotReregisterLaunchAtLoginThatRequiresApproval() throws {
+        let service = StubLaunchAtLoginService(status: .requiresApproval)
+        let manager = ConfigManager(
+            migrateLegacySettings: false,
+            launchAtLoginService: service
+        )
+
+        try manager.setStartAtLogin(true)
+
+        XCTAssertEqual(service.registerCount, 0)
+    }
+
+    func testReportsLaunchAtLoginThatRequiresApprovalAsRegistered() {
+        let manager = ConfigManager(
+            migrateLegacySettings: false,
+            launchAtLoginService: StubLaunchAtLoginService(status: .requiresApproval)
+        )
+
+        XCTAssertTrue(manager.getStartAtLogin())
     }
 }

@@ -10,14 +10,14 @@ import CoreGraphics
 import ServiceManagement
 
 protocol LaunchAtLoginServicing {
-    var isEnabled: Bool { get }
+    var status: SMAppService.Status { get }
     func register() throws
     func unregister() throws
 }
 
 struct MainAppLaunchAtLoginService: LaunchAtLoginServicing {
-    var isEnabled: Bool {
-        SMAppService.mainApp.status == .enabled
+    var status: SMAppService.Status {
+        SMAppService.mainApp.status
     }
 
     func register() throws {
@@ -136,14 +136,35 @@ class ConfigManager {
     // MARK: - Launch at Login
 
     func getStartAtLogin() -> Bool {
-        launchAtLoginService.isEnabled
+        switch launchAtLoginService.status {
+        case .enabled, .requiresApproval:
+            return true
+        case .notRegistered, .notFound:
+            return false
+        @unknown default:
+            return false
+        }
     }
 
     func setStartAtLogin(_ enabled: Bool) throws {
         if enabled {
-            try launchAtLoginService.register()
+            switch launchAtLoginService.status {
+            case .enabled, .requiresApproval:
+                return
+            case .notRegistered, .notFound:
+                try launchAtLoginService.register()
+            @unknown default:
+                try launchAtLoginService.register()
+            }
         } else {
-            try launchAtLoginService.unregister()
+            switch launchAtLoginService.status {
+            case .notRegistered, .notFound:
+                return
+            case .enabled, .requiresApproval:
+                try launchAtLoginService.unregister()
+            @unknown default:
+                try launchAtLoginService.unregister()
+            }
         }
     }
 
