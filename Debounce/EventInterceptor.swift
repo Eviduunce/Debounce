@@ -27,6 +27,22 @@ enum EventInterceptorStartResult: Equatable {
     case runLoopSourceCreationFailed
 }
 
+enum EventTapTeardown {
+    static func perform(
+        disableTap: () -> Void,
+        invalidateTap: () -> Void,
+        removeRunLoopSource: () -> Void,
+        clearRunLoopSource: () -> Void,
+        clearTap: () -> Void
+    ) {
+        disableTap()
+        invalidateTap()
+        removeRunLoopSource()
+        clearRunLoopSource()
+        clearTap()
+    }
+}
+
 /// Coordinates Accessibility permission checks with the event-tap driver.
 final class EventInterceptor {
     let chatterBlocker: ChatterBlocker
@@ -51,11 +67,11 @@ final class EventInterceptor {
 
     /// Start intercepting keyboard events.
     func start() -> EventInterceptorStartResult {
+        driver.stop()
+
         guard permissionChecker.isAccessibilityTrusted(prompt: false) else {
             return .accessibilityPermissionRequired
         }
-
-        driver.stop()
 
         switch driver.start() {
         case .started:
@@ -118,16 +134,29 @@ final class CoreGraphicsEventTapDriver: EventTapDriving {
     }
 
     func stop() {
-        if let source = runLoopSource {
-            CFRunLoopRemoveSource(CFRunLoopGetCurrent(), source, .commonModes)
-            runLoopSource = nil
-        }
-
-        if let tap = eventTap {
-            CGEvent.tapEnable(tap: tap, enable: false)
-            CFMachPortInvalidate(tap)
-            eventTap = nil
-        }
+        EventTapTeardown.perform(
+            disableTap: {
+                if let tap = self.eventTap {
+                    CGEvent.tapEnable(tap: tap, enable: false)
+                }
+            },
+            invalidateTap: {
+                if let tap = self.eventTap {
+                    CFMachPortInvalidate(tap)
+                }
+            },
+            removeRunLoopSource: {
+                if let source = self.runLoopSource {
+                    CFRunLoopRemoveSource(CFRunLoopGetCurrent(), source, .commonModes)
+                }
+            },
+            clearRunLoopSource: {
+                self.runLoopSource = nil
+            },
+            clearTap: {
+                self.eventTap = nil
+            }
+        )
     }
 
     deinit {
