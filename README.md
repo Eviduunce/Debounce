@@ -6,11 +6,17 @@ Inspired by the Windows [Keyboard Chatter Blocker](https://github.com/FreneticLL
 
 ## Important: Accessibility Permission
 
-This app requires **Accessibility permissions** to intercept keyboard events system-wide via `CGEventTap`. Without this permission, the app cannot function. macOS will prompt you on first launch, or you can enable it manually:
+Debounce requires **Accessibility permission** to intercept keyboard events system-wide via `CGEventTap`. Without it, chatter blocking cannot run. macOS prompts on first use, or you can enable it manually:
 
 **System Settings → Privacy & Security → Accessibility → Debounce → ON**
 
-If you move the app after granting permissions, macOS may revoke them. Re-enable in System Settings if this happens.
+If Debounce already appears enabled there but still reports that permission is missing:
+
+1. Click **Enable** in Debounce again.
+2. In the permission alert, choose **Repair Permission**. This removes only Debounce's stale Accessibility entry, asks macOS for access again, and opens the correct settings panel.
+3. Turn Debounce on in Accessibility settings, then return to the app. Debounce rechecks access and finishes enabling automatically.
+
+Moving or replacing the app can cause macOS to revoke access. If that happens, grant permission again or use **Repair Permission**.
 
 ## Installation
 
@@ -60,6 +66,8 @@ Settings persist via `UserDefaults`.
 
 - Xcode 15.0+
 - Open `Debounce.xcodeproj` and build
+
+Debug builds use the display name **Debounce Debug** and bundle identifier `com.leisengang.Debounce.debug`. The installed release remains **Debounce** with bundle identifier `com.leisengang.Debounce`. macOS tracks Accessibility consent by code identity, so Debug and Release appear as separate entries and must each be granted permission. This prevents an Xcode-signed development build from invalidating or reusing the installed release's permission.
 
 ### Project Structure
 
