@@ -19,8 +19,9 @@ All notable changes to Debounce are documented here. Format loosely follows
 - Missing Accessibility permission, event-tap creation failure, and run-loop
   source failure are reported as distinct outcomes instead of one generic
   failure.
-- Event-tap teardown now releases retained events and cleans up failed taps,
-  run-loop sources, and restart state correctly.
+- Event callbacks now return borrowed events without retaining them, avoiding
+  passed-event leaks. Failed taps and run-loop resources are cleaned up
+  correctly.
 - A global threshold of `0` now survives relaunch instead of being replaced by
   the default value.
 - Blocking's persisted and visible enabled state now remains consistent when
