@@ -1,6 +1,6 @@
 # Permission Reliability and Release Design
 
-**Date:** 2026-07-10  
+**Date:** 2026-07-10
 **Release:** 1.3
 
 ## Goal
