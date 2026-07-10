@@ -24,6 +24,13 @@ class ChatterBlocker: ObservableObject {
     private var keyToThreshold: [CGKeyCode: UInt64] = [:]
     private var keyIsDown: [CGKeyCode: Bool] = [:]
     private var keyDownWasBlocked: [CGKeyCode: Bool] = [:]
+    private let now: () -> UInt64
+
+    init(now: @escaping () -> UInt64 = {
+        UInt64(ProcessInfo.processInfo.systemUptime * 1_000)
+    }) {
+        self.now = now
+    }
 
     // MARK: - Configuration
     @Published var minimumChatterTime: UInt64 = 0 // ms - ignores chatter faster than this (helps with buggy inputs)
@@ -35,8 +42,7 @@ class ChatterBlocker: ObservableObject {
 
     // MARK: - Timing
     private func getCurrentTime() -> UInt64 {
-        // Convert system uptime to milliseconds
-        return UInt64(ProcessInfo.processInfo.systemUptime * 1000)
+        now()
     }
 
     // MARK: - Key Event Handling

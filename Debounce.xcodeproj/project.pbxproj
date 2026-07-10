@@ -6,8 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		A10000000000000000000008 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 254BDB1B2E94ED0900073081 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 254BDB222E94ED0900073081;
+			remoteInfo = Debounce;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		254BDB232E94ED0900073081 /* Debounce.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Debounce.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000001 /* DebounceTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DebounceTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -29,10 +40,22 @@
 			path = Debounce;
 			sourceTree = "<group>";
 		};
+		A10000000000000000000002 /* DebounceTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = DebounceTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		254BDB202E94ED0900073081 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000003 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -46,6 +69,7 @@
 			isa = PBXGroup;
 			children = (
 				254BDB252E94ED0900073081 /* Debounce */,
+				A10000000000000000000002 /* DebounceTests */,
 				254BDB242E94ED0900073081 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -54,6 +78,7 @@
 			isa = PBXGroup;
 			children = (
 				254BDB232E94ED0900073081 /* Debounce.app */,
+				A10000000000000000000001 /* DebounceTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -83,6 +108,29 @@
 			productReference = 254BDB232E94ED0900073081 /* Debounce.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A10000000000000000000006 /* DebounceTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A10000000000000000000009 /* Build configuration list for PBXNativeTarget "DebounceTests" */;
+			buildPhases = (
+				A10000000000000000000004 /* Sources */,
+				A10000000000000000000003 /* Frameworks */,
+				A10000000000000000000005 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A10000000000000000000007 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A10000000000000000000002 /* DebounceTests */,
+			);
+			name = DebounceTests;
+			packageProductDependencies = (
+			);
+			productName = DebounceTests;
+			productReference = A10000000000000000000001 /* DebounceTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -95,6 +143,10 @@
 				TargetAttributes = {
 					254BDB222E94ED0900073081 = {
 						CreatedOnToolsVersion = 26.0;
+					};
+					A10000000000000000000006 = {
+						CreatedOnToolsVersion = 26.0;
+						TestTargetID = 254BDB222E94ED0900073081;
 					};
 				};
 			};
@@ -113,12 +165,20 @@
 			projectRoot = "";
 			targets = (
 				254BDB222E94ED0900073081 /* Debounce */,
+				A10000000000000000000006 /* DebounceTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		254BDB212E94ED0900073081 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000005 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -135,7 +195,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A10000000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A10000000000000000000007 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 254BDB222E94ED0900073081 /* Debounce */;
+			targetProxy = A10000000000000000000008 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		254BDB2C2E94ED0A00073081 /* Debug */ = {
@@ -326,6 +401,32 @@
 			};
 			name = Release;
 		};
+		A1000000000000000000000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.leisengang.DebounceTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Debounce.app/Contents/MacOS/Debounce";
+			};
+			name = Debug;
+		};
+		A1000000000000000000000B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.leisengang.DebounceTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Debounce.app/Contents/MacOS/Debounce";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -343,6 +444,15 @@
 			buildConfigurations = (
 				254BDB2F2E94ED0A00073081 /* Debug */,
 				254BDB302E94ED0A00073081 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A10000000000000000000009 /* Build configuration list for PBXNativeTarget "DebounceTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1000000000000000000000A /* Debug */,
+				A1000000000000000000000B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
