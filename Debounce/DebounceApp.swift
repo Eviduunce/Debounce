@@ -194,7 +194,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func startBlocking() {
-        if eventInterceptor?.start() == false {
+        if eventInterceptor?.start() != .started {
             chatterBlocker.isEnabled = false
             updateMenuBarIcon()
         }

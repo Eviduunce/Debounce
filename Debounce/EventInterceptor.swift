@@ -8,28 +8,87 @@
 import Cocoa
 import Carbon
 
-/// Intercepts keyboard events using CGEventTap and passes them through the ChatterBlocker
-class EventInterceptor {
+enum EventTapDriverStartResult: Equatable {
+    case started
+    case tapCreationFailed
+    case runLoopSourceCreationFailed
+}
 
-    var eventTap: CFMachPort?
-    private var runLoopSource: CFRunLoopSource?
+protocol EventTapDriving: AnyObject {
+    var onTapDied: (() -> Void)? { get set }
+    func start() -> EventTapDriverStartResult
+    func stop()
+}
+
+enum EventInterceptorStartResult: Equatable {
+    case started
+    case accessibilityPermissionRequired
+    case eventTapCreationFailed
+    case runLoopSourceCreationFailed
+}
+
+/// Coordinates Accessibility permission checks with the event-tap driver.
+final class EventInterceptor {
     let chatterBlocker: ChatterBlocker
+
+    var onTapDied: (() -> Void)? {
+        get { driver.onTapDied }
+        set { driver.onTapDied = newValue }
+    }
+
+    private let permissionChecker: AccessibilityPermissionChecking
+    private let driver: EventTapDriving
+
+    init(
+        chatterBlocker: ChatterBlocker,
+        permissionChecker: AccessibilityPermissionChecking = PermissionHelper(),
+        driver: EventTapDriving? = nil
+    ) {
+        self.chatterBlocker = chatterBlocker
+        self.permissionChecker = permissionChecker
+        self.driver = driver ?? CoreGraphicsEventTapDriver(chatterBlocker: chatterBlocker)
+    }
+
+    /// Start intercepting keyboard events.
+    func start() -> EventInterceptorStartResult {
+        guard permissionChecker.isAccessibilityTrusted(prompt: false) else {
+            return .accessibilityPermissionRequired
+        }
+
+        driver.stop()
+
+        switch driver.start() {
+        case .started:
+            return .started
+        case .tapCreationFailed:
+            return .eventTapCreationFailed
+        case .runLoopSourceCreationFailed:
+            return .runLoopSourceCreationFailed
+        }
+    }
+
+    func stop() {
+        driver.stop()
+    }
+
+    deinit {
+        stop()
+    }
+}
+
+/// Owns the CoreGraphics event tap and its run-loop source.
+final class CoreGraphicsEventTapDriver: EventTapDriving {
     var onTapDied: (() -> Void)?
+
+    fileprivate var eventTap: CFMachPort?
+    fileprivate let chatterBlocker: ChatterBlocker
+    private var runLoopSource: CFRunLoopSource?
 
     init(chatterBlocker: ChatterBlocker) {
         self.chatterBlocker = chatterBlocker
     }
 
-    /// Start intercepting keyboard events
-    func start() -> Bool {
-        guard PermissionHelper.ensureAccessibilityPermissions() else {
-            return false
-        }
-
-        // Stop existing tap if any
-        stop()
-
-        // Create event tap
+    func start() -> EventTapDriverStartResult {
         let eventMask = (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.keyUp.rawValue)
 
         guard let tap = CGEvent.tapCreate(
@@ -40,38 +99,34 @@ class EventInterceptor {
             callback: eventTapCallback,
             userInfo: UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
         ) else {
-            return false
+            return .tapCreationFailed
         }
 
         eventTap = tap
 
-        // Create run loop source
-        runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
-
-        guard let runLoopSource = runLoopSource else {
-            return false
+        guard let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0) else {
+            CFMachPortInvalidate(tap)
+            eventTap = nil
+            return .runLoopSourceCreationFailed
         }
 
-        // Add to current run loop
-        CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
-
-        // Enable the event tap
+        runLoopSource = source
+        CFRunLoopAddSource(CFRunLoopGetCurrent(), source, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
 
-        return true
+        return .started
     }
 
-    /// Stop intercepting keyboard events
     func stop() {
+        if let source = runLoopSource {
+            CFRunLoopRemoveSource(CFRunLoopGetCurrent(), source, .commonModes)
+            runLoopSource = nil
+        }
+
         if let tap = eventTap {
             CGEvent.tapEnable(tap: tap, enable: false)
             CFMachPortInvalidate(tap)
             eventTap = nil
-        }
-
-        if let source = runLoopSource {
-            CFRunLoopRemoveSource(CFRunLoopGetCurrent(), source, .commonModes)
-            runLoopSource = nil
         }
     }
 
@@ -88,41 +143,39 @@ private func eventTapCallback(
     event: CGEvent,
     refcon: UnsafeMutableRawPointer?
 ) -> Unmanaged<CGEvent>? {
-
-    // Handle event tap disabled (happens when user locks screen, etc)
+    // Handle event tap disabled (happens when user locks screen, etc).
     if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-        if let refcon = refcon {
-            let interceptor = Unmanaged<EventInterceptor>.fromOpaque(refcon).takeUnretainedValue()
-            if let tap = interceptor.eventTap {
+        if let refcon {
+            let driver = Unmanaged<CoreGraphicsEventTapDriver>.fromOpaque(refcon).takeUnretainedValue()
+            if let tap = driver.eventTap {
                 CGEvent.tapEnable(tap: tap, enable: true)
-                // Check if re-enable actually succeeded
                 if !CGEvent.tapIsEnabled(tap: tap) {
                     DispatchQueue.main.async {
-                        interceptor.onTapDied?()
+                        driver.onTapDied?()
                     }
                 }
             }
         }
-        return Unmanaged.passRetained(event)
+        return Unmanaged.passUnretained(event)
     }
 
-    guard let refcon = refcon else {
-        return Unmanaged.passRetained(event)
+    guard let refcon else {
+        return Unmanaged.passUnretained(event)
     }
 
-    let interceptor = Unmanaged<EventInterceptor>.fromOpaque(refcon).takeUnretainedValue()
+    let driver = Unmanaged<CoreGraphicsEventTapDriver>.fromOpaque(refcon).takeUnretainedValue()
     let keyCode = CGKeyCode(event.getIntegerValueField(.keyboardEventKeycode))
 
     switch type {
     case .keyDown:
-        let shouldAllow = interceptor.chatterBlocker.shouldAllowKeyDown(keyCode: keyCode)
-        return shouldAllow ? Unmanaged.passRetained(event) : nil
+        let shouldAllow = driver.chatterBlocker.shouldAllowKeyDown(keyCode: keyCode)
+        return shouldAllow ? Unmanaged.passUnretained(event) : nil
 
     case .keyUp:
-        let shouldAllow = interceptor.chatterBlocker.shouldAllowKeyUp(keyCode: keyCode)
-        return shouldAllow ? Unmanaged.passRetained(event) : nil
+        let shouldAllow = driver.chatterBlocker.shouldAllowKeyUp(keyCode: keyCode)
+        return shouldAllow ? Unmanaged.passUnretained(event) : nil
 
     default:
-        return Unmanaged.passRetained(event)
+        return Unmanaged.passUnretained(event)
     }
 }

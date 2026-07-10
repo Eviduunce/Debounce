@@ -8,13 +8,21 @@
 import Cocoa
 import ApplicationServices
 
+protocol AccessibilityPermissionChecking {
+    func isAccessibilityTrusted(prompt: Bool) -> Bool
+}
+
 /// Helper class for managing accessibility permissions required for event monitoring
-class PermissionHelper {
+final class PermissionHelper: AccessibilityPermissionChecking {
+
+    func isAccessibilityTrusted(prompt: Bool) -> Bool {
+        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: prompt] as CFDictionary
+        return AXIsProcessTrustedWithOptions(options)
+    }
 
     /// Check if the app has accessibility permissions
     static func hasAccessibilityPermissions() -> Bool {
-        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: false] as CFDictionary
-        return AXIsProcessTrustedWithOptions(options)
+        PermissionHelper().isAccessibilityTrusted(prompt: false)
     }
 
     /// Check permissions, showing an explanatory alert with a link to System Settings if missing.
