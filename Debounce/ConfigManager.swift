@@ -9,13 +9,42 @@ import Foundation
 import CoreGraphics
 import ServiceManagement
 
+protocol LaunchAtLoginServicing {
+    var isEnabled: Bool { get }
+    func register() throws
+    func unregister() throws
+}
+
+struct MainAppLaunchAtLoginService: LaunchAtLoginServicing {
+    var isEnabled: Bool {
+        SMAppService.mainApp.status == .enabled
+    }
+
+    func register() throws {
+        try SMAppService.mainApp.register()
+    }
+
+    func unregister() throws {
+        try SMAppService.mainApp.unregister()
+    }
+}
+
 /// Manages persistence of application configuration
 class ConfigManager {
 
-    private let defaults = UserDefaults.standard
+    private let defaults: UserDefaults
+    private let launchAtLoginService: LaunchAtLoginServicing
 
-    init() {
-        migrateFromOldBundleIfNeeded()
+    init(
+        defaults: UserDefaults = .standard,
+        migrateLegacySettings: Bool = true,
+        launchAtLoginService: LaunchAtLoginServicing = MainAppLaunchAtLoginService()
+    ) {
+        self.defaults = defaults
+        self.launchAtLoginService = launchAtLoginService
+        if migrateLegacySettings {
+            migrateFromOldBundleIfNeeded()
+        }
     }
 
     /// Migrate settings from old bundle ID (com.leisengang.KCBforMac) on first launch
@@ -83,9 +112,8 @@ class ConfigManager {
     func loadSettings(into blocker: ChatterBlocker) {
         blocker.isEnabled = defaults.bool(forKey: Keys.isEnabled)
 
-        let globalThreshold = defaults.integer(forKey: Keys.globalThreshold)
-        if globalThreshold > 0 {
-            blocker.globalThreshold = UInt64(globalThreshold)
+        if defaults.object(forKey: Keys.globalThreshold) != nil {
+            blocker.globalThreshold = UInt64(max(0, defaults.integer(forKey: Keys.globalThreshold)))
         }
 
         let minimumChatterTime = defaults.integer(forKey: Keys.minimumChatterTime)
@@ -108,18 +136,14 @@ class ConfigManager {
     // MARK: - Launch at Login
 
     func getStartAtLogin() -> Bool {
-        return SMAppService.mainApp.status == .enabled
+        launchAtLoginService.isEnabled
     }
 
-    func setStartAtLogin(_ enabled: Bool) {
-        do {
-            if enabled {
-                try SMAppService.mainApp.register()
-            } else {
-                try SMAppService.mainApp.unregister()
-            }
-        } catch {
-            // Registration can fail if app is not in /Applications
+    func setStartAtLogin(_ enabled: Bool) throws {
+        if enabled {
+            try launchAtLoginService.register()
+        } else {
+            try launchAtLoginService.unregister()
         }
     }
 

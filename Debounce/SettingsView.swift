@@ -19,6 +19,7 @@ struct SettingsView: View {
     @State private var eventMonitor: Any?
     @State private var showResetConfirmation = false
     @State private var launchAtLogin: Bool = false
+    @State private var launchAtLoginError: String?
     @State private var showDuplicateKeyAlert = false
     @State private var duplicateKeyCode: CGKeyCode?
     @State private var keyCaptured = false
@@ -117,11 +118,11 @@ struct SettingsView: View {
             }
 
             Section {
-                Toggle("Launch at Login", isOn: $launchAtLogin)
+                Toggle("Launch at Login", isOn: Binding(
+                    get: { launchAtLogin },
+                    set: updateLaunchAtLogin
+                ))
                     .toggleStyle(.switch)
-                    .onChange(of: launchAtLogin) { _, newValue in
-                        configManager.setStartAtLogin(newValue)
-                    }
             }
 
             Section {
@@ -143,6 +144,30 @@ struct SettingsView: View {
             }
         } message: {
             Text("This will reset all thresholds and disable chatter blocking.")
+        }
+        .alert("Unable to Change Login Setting", isPresented: Binding(
+            get: { launchAtLoginError != nil },
+            set: { isPresented in
+                if !isPresented {
+                    launchAtLoginError = nil
+                }
+            }
+        )) {
+            Button("OK") {
+                launchAtLoginError = nil
+            }
+        } message: {
+            Text(launchAtLoginError ?? "An unknown error occurred.")
+        }
+    }
+
+    private func updateLaunchAtLogin(_ enabled: Bool) {
+        do {
+            try configManager.setStartAtLogin(enabled)
+            launchAtLogin = enabled
+        } catch {
+            launchAtLogin = configManager.getStartAtLogin()
+            launchAtLoginError = error.localizedDescription
         }
     }
 
@@ -448,8 +473,7 @@ struct SettingsView: View {
         blocker.measureFromRelease = false
         blocker.removeAllThresholds()
         blocker.resetTimingData()
-        launchAtLogin = false
-        configManager.setStartAtLogin(false)
+        updateLaunchAtLogin(false)
         save()
     }
 }
