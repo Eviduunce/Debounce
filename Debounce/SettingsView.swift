@@ -54,9 +54,6 @@ struct SettingsView: View {
         }
         .frame(minWidth: 600, idealWidth: 700, maxWidth: .infinity,
                minHeight: 500, idealHeight: 600, maxHeight: .infinity)
-        .onChange(of: blocker.isEnabled) { _, newValue in
-            onToggleBlocking(newValue)
-        }
         .onChange(of: blocker.globalThreshold) { save() }
         .onChange(of: blocker.minimumChatterTime) { save() }
         .onChange(of: blocker.measureFromRelease) { save() }
@@ -71,7 +68,10 @@ struct SettingsView: View {
     private var mainSettingsTab: some View {
         Form {
             Section {
-                Toggle("Enable Chatter Blocking", isOn: $blocker.isEnabled)
+                Toggle("Enable Chatter Blocking", isOn: Binding(
+                    get: { blocker.isEnabled },
+                    set: { onToggleBlocking($0) }
+                ))
                     .toggleStyle(.switch)
 
                 LabeledContent("Global Threshold:") {
@@ -480,7 +480,7 @@ struct SettingsView: View {
     // MARK: - Reset to Defaults
 
     private func resetToDefaults() {
-        blocker.isEnabled = false
+        onToggleBlocking(false)
         blocker.globalThreshold = 100
         blocker.minimumChatterTime = 0
         blocker.measureFromRelease = false

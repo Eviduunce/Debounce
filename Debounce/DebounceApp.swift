@@ -8,6 +8,84 @@
 import SwiftUI
 import UserNotifications
 
+protocol EventIntercepting: AnyObject {
+    var onTapDied: (() -> Void)? { get set }
+    func start() -> EventInterceptorStartResult
+    func stop()
+}
+
+extension EventInterceptor: EventIntercepting {}
+
+enum BlockingTransition: Equatable {
+    case enabled
+    case disabled
+    case permissionRequired
+    case eventTapCreationFailed
+    case runLoopSourceCreationFailed
+}
+
+final class BlockingController {
+    private let blocker: ChatterBlocker
+    private let interceptor: EventIntercepting
+    private let persist: (ChatterBlocker) -> Void
+
+    private(set) var pendingPermissionEnable = false
+
+    init(
+        blocker: ChatterBlocker,
+        interceptor: EventIntercepting,
+        persist: @escaping (ChatterBlocker) -> Void
+    ) {
+        self.blocker = blocker
+        self.interceptor = interceptor
+        self.persist = persist
+    }
+
+    func setEnabled(_ enabled: Bool) -> BlockingTransition {
+        guard enabled else {
+            interceptor.stop()
+            blocker.resetTimingData()
+            blocker.isEnabled = false
+            pendingPermissionEnable = false
+            persist(blocker)
+            return .disabled
+        }
+
+        let transition: BlockingTransition
+        switch interceptor.start() {
+        case .started:
+            blocker.isEnabled = true
+            pendingPermissionEnable = false
+            transition = .enabled
+        case .accessibilityPermissionRequired:
+            blocker.isEnabled = false
+            pendingPermissionEnable = true
+            blocker.resetTimingData()
+            transition = .permissionRequired
+        case .eventTapCreationFailed:
+            blocker.isEnabled = false
+            pendingPermissionEnable = false
+            blocker.resetTimingData()
+            transition = .eventTapCreationFailed
+        case .runLoopSourceCreationFailed:
+            blocker.isEnabled = false
+            pendingPermissionEnable = false
+            blocker.resetTimingData()
+            transition = .runLoopSourceCreationFailed
+        }
+
+        persist(blocker)
+        return transition
+    }
+
+    func retryPendingPermission() -> BlockingTransition {
+        guard pendingPermissionEnable else {
+            return blocker.isEnabled ? .enabled : .disabled
+        }
+        return setEnabled(true)
+    }
+}
+
 @main
 struct DebounceApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
@@ -25,7 +103,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var settingsWindow: NSWindow?
     let chatterBlocker = ChatterBlocker()
     let configManager = ConfigManager()
+    private let permissionHelper = PermissionHelper()
     var eventInterceptor: EventInterceptor?
+    private var blockingController: BlockingController?
     private var statisticsSaveTimer: Timer?
     private var iconFlashTimer: Timer?
     private var statusMenuItem: NSMenuItem?
@@ -43,9 +123,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupMenuBar()
 
         // Set up event interceptor
-        eventInterceptor = EventInterceptor(chatterBlocker: chatterBlocker)
+        let eventInterceptor = EventInterceptor(chatterBlocker: chatterBlocker)
+        self.eventInterceptor = eventInterceptor
+        blockingController = BlockingController(
+            blocker: chatterBlocker,
+            interceptor: eventInterceptor,
+            persist: { [weak self] blocker in
+                self?.configManager.saveSettings(from: blocker)
+            }
+        )
 
-        eventInterceptor?.onTapDied = { [weak self] in
+        eventInterceptor.onTapDied = { [weak self] in
             self?.handleTapDied()
         }
 
@@ -54,7 +142,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         if chatterBlocker.isEnabled {
-            startBlocking()
+            requestBlockingState(true)
         }
 
         // Save statistics periodically (every 30 seconds)
@@ -68,7 +156,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         configManager.saveStatistics(from: chatterBlocker)
-        stopBlocking()
+        eventInterceptor?.stop()
+        chatterBlocker.resetTimingData()
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) {
+        guard blockingController?.pendingPermissionEnable == true else { return }
+        retryPendingPermission()
     }
 
     // MARK: - Menu Bar
@@ -142,17 +236,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func toggleBlocking() {
-        chatterBlocker.isEnabled.toggle()
-
-        if chatterBlocker.isEnabled {
-            startBlocking()
-        } else {
-            stopBlocking()
-        }
-
-        configManager.saveSettings(from: chatterBlocker)
-        updateMenuBarIcon()
-        updateMenu()
+        requestBlockingState(!chatterBlocker.isEnabled)
     }
 
     @objc func openSettings() {
@@ -161,15 +245,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 blocker: chatterBlocker,
                 configManager: configManager,
                 onToggleBlocking: { [weak self] enabled in
-                    guard let self else { return }
-                    if enabled {
-                        self.startBlocking()
-                    } else {
-                        self.stopBlocking()
-                    }
-                    self.configManager.saveSettings(from: self.chatterBlocker)
-                    self.updateMenuBarIcon()
-                    self.updateMenu()
+                    self?.requestBlockingState(enabled)
                 }
             )
 
@@ -189,20 +265,78 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func quitApp() {
         configManager.saveStatistics(from: chatterBlocker)
-        stopBlocking()
         NSApp.terminate(nil)
     }
 
-    func startBlocking() {
-        if eventInterceptor?.start() != .started {
-            chatterBlocker.isEnabled = false
-            updateMenuBarIcon()
+    private func requestBlockingState(_ enabled: Bool) {
+        guard let blockingController else { return }
+        let transition = blockingController.setEnabled(enabled)
+        handleBlockingTransition(transition, presentPermissionAlert: true)
+    }
+
+    private func retryPendingPermission() {
+        guard let blockingController else { return }
+        let transition = blockingController.retryPendingPermission()
+        handleBlockingTransition(transition, presentPermissionAlert: false)
+    }
+
+    private func handleBlockingTransition(
+        _ transition: BlockingTransition,
+        presentPermissionAlert: Bool
+    ) {
+        updateMenuBarIcon()
+        updateMenu()
+
+        switch transition {
+        case .enabled, .disabled:
+            break
+        case .permissionRequired:
+            if presentPermissionAlert {
+                handlePermissionRequired()
+            }
+        case .eventTapCreationFailed:
+            presentAlert(
+                title: "Keyboard Monitor Could Not Start",
+                message: "Debounce has Accessibility permission, but macOS could not create the keyboard event monitor. Try disabling and re-enabling Debounce."
+            )
+        case .runLoopSourceCreationFailed:
+            presentAlert(
+                title: "Keyboard Monitor Could Not Attach",
+                message: "Debounce created the keyboard event monitor, but could not attach it to the app’s run loop. Quit and reopen Debounce, then try again."
+            )
         }
     }
 
-    func stopBlocking() {
-        eventInterceptor?.stop()
-        chatterBlocker.resetTimingData()
+    private func handlePermissionRequired() {
+        do {
+            switch try permissionHelper.showPermissionAlert() {
+            case .openSettings, .repairPermission:
+                break
+            case .cancel:
+                cancelPendingPermissionEnable()
+            }
+        } catch {
+            cancelPendingPermissionEnable()
+            presentAlert(
+                title: "Unable to Repair Accessibility Permission",
+                message: error.localizedDescription
+            )
+        }
+    }
+
+    private func cancelPendingPermissionEnable() {
+        guard let blockingController else { return }
+        let transition = blockingController.setEnabled(false)
+        handleBlockingTransition(transition, presentPermissionAlert: false)
+    }
+
+    private func presentAlert(title: String, message: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 
     // MARK: - Menu Bar Icon
@@ -241,9 +375,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Event Tap Death
 
     private func handleTapDied() {
-        chatterBlocker.isEnabled = false
-        updateMenuBarIcon()
-        updateMenu()
+        if let blockingController {
+            let transition = blockingController.setEnabled(false)
+            handleBlockingTransition(transition, presentPermissionAlert: false)
+        }
 
         // Update the icon to indicate error
         if let button = statusItem?.button {
